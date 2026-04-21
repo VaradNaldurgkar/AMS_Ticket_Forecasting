@@ -1,0 +1,11 @@
+Call Code,Category,Count,Percentage
+Chat,Incident,18349,89.41
+E-Mail,Incident,1900,9.26
+Transferred Request,Incident,100,0.49
+Personal,Incident,99,0.48
+Phone,Incident,74,0.36
+Chat,Service Request,21674,92.12
+E-Mail,Service Request,1512,6.43
+Transferred Incident,Service Request,246,1.05
+Personal,Service Request,73,0.31
+Phone,Service Request,22,0.09
