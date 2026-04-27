@@ -1,0 +1,71 @@
+/* RESET (VERY IMPORTANT) */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+#root {
+  margin: 0;
+  padding: 0;
+}
+
+/* NAVBAR */
+.navbar {
+  height: 60px;
+  background: #1f2937;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: fixed;   /* 🔥 FIX */
+  top: 0;
+  left: 0;
+  width: 100%;
+
+  z-index: 1100;
+}
+
+/* TITLE */
+.title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* HAMBURGER */
+.hamburger {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* SIDEBAR (FIXED FROM TOP) */
+.sidebar {
+  position: fixed;
+  top: 0;              /* 🔥 FIX (remove gap) */
+  left: -250px;
+  width: 250px;
+  height: 100vh;
+
+  background: #111827;
+  color: white;
+
+  transition: 0.3s;
+  padding: 80px 20px 20px; /* space for navbar */
+  z-index: 1000;
+}
+
+.sidebar.open {
+  left: 0;
+}
+
+/* CONTENT */
+.content {
+  margin-top: 60px;   /* 🔥 prevent overlap */
+  padding: 20px;
+}

@@ -1,0 +1,15 @@
+node_modules/
+.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# ML models (optional if large)
+*.pkl
+*.joblib
+
+# OS
+.DS_Store

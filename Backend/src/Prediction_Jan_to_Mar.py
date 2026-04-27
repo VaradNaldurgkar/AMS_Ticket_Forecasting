@@ -36,18 +36,39 @@ monthly["sin_month"] = np.sin(2 * np.pi * monthly["Month_Num"] / 12)
 monthly["cos_month"] = np.cos(2 * np.pi * monthly["Month_Num"] / 12)
 
 # --------------------------------------------------
-# 5. Lag features
+# 🔥 Ensure Apr & May exist
+# --------------------------------------------------
+last_date = monthly["Month"].max()
+
+while last_date < pd.Timestamp("2026-05-01"):
+    next_month = last_date + pd.DateOffset(months=1)
+
+    new_row = {
+        "Month": next_month,
+        "Total_Tickets": np.nan,
+        "Time_Index": monthly["Time_Index"].max() + 1,
+        "Month_Num": next_month.month
+    }
+
+    monthly = pd.concat([monthly, pd.DataFrame([new_row])], ignore_index=True)
+    last_date = next_month
+
+# recompute seasonality after adding rows
+monthly["sin_month"] = np.sin(2 * np.pi * monthly["Month_Num"] / 12)
+monthly["cos_month"] = np.cos(2 * np.pi * monthly["Month_Num"] / 12)
+
+# --------------------------------------------------
+# 5. Lag features (for training only)
 # --------------------------------------------------
 monthly["Lag_1"] = monthly["Total_Tickets"].shift(1)
 monthly["Lag_2"] = monthly["Total_Tickets"].shift(2)
 monthly["Lag_3"] = monthly["Total_Tickets"].shift(3)
 
-monthly = monthly.dropna().reset_index(drop=True)
-
 # --------------------------------------------------
 # 6. Train data
 # --------------------------------------------------
 train = monthly[monthly["Month"] < "2026-01-01"].copy()
+train = train.dropna()
 
 features = [
     "Time_Index",
@@ -73,35 +94,44 @@ weights = np.linspace(1, 2.5, len(train))
 model.fit(train[features], train["Total_Tickets"], sample_weight=weights)
 
 # --------------------------------------------------
-# 🔥 8. CONTROLLED RECURSION (CORRECT)
+# 8. DYNAMIC RECURSION
 # --------------------------------------------------
 monthly["Predicted_Tickets"] = monthly["Total_Tickets"].astype(float)
 history = monthly.copy()
 
+forecast_start = pd.Timestamp("2026-01-01")
+
 for i in range(len(history)):
 
-    if history.loc[i, "Month"] < pd.Timestamp("2026-01-01"):
+    if history.loc[i, "Month"] < forecast_start:
         continue
 
-    current_month = history.loc[i, "Month"]
+    # step = 1 → Jan, 2 → Feb, 3 → Mar, ...
+    step = (
+        (history.loc[i, "Month"].year - forecast_start.year) * 12 +
+        (history.loc[i, "Month"].month - forecast_start.month) + 1
+    )
 
-    # Jan
-    if current_month == pd.Timestamp("2026-01-01"):
+    # --- dynamic lag logic (preserves your behavior) ---
+    if step == 1:
         lag_1 = history.loc[i-1, "Total_Tickets"]
         lag_2 = history.loc[i-2, "Total_Tickets"]
         lag_3 = history.loc[i-3, "Total_Tickets"]
 
-    # Feb
-    elif current_month == pd.Timestamp("2026-02-01"):
-        lag_1 = history.loc[i-1, "Predicted_Tickets"]  # Jan pred
+    elif step == 2:
+        lag_1 = history.loc[i-1, "Predicted_Tickets"]
         lag_2 = history.loc[i-2, "Total_Tickets"]
         lag_3 = history.loc[i-3, "Total_Tickets"]
 
-    # Mar
-    else:
-        lag_1 = history.loc[i-1, "Predicted_Tickets"]  # Feb pred
-        lag_2 = history.loc[i-2, "Predicted_Tickets"]  # Jan pred
+    elif step == 3:
+        lag_1 = history.loc[i-1, "Predicted_Tickets"]
+        lag_2 = history.loc[i-2, "Predicted_Tickets"]
         lag_3 = history.loc[i-3, "Total_Tickets"]
+
+    else:
+        lag_1 = history.loc[i-1, "Predicted_Tickets"]
+        lag_2 = history.loc[i-2, "Predicted_Tickets"]
+        lag_3 = history.loc[i-3, "Predicted_Tickets"]
 
     row = pd.DataFrame({
         "Time_Index": [history.loc[i, "Time_Index"]],
@@ -125,26 +155,38 @@ monthly["Absolute_Error"] = abs(
 )
 
 # --------------------------------------------------
-# 10. Save
+# 10. Save (Project + Desktop)
 # --------------------------------------------------
+
+# ---- Save inside project (existing) ----
 output_dir = "data/processed"
 os.makedirs(output_dir, exist_ok=True)
 
-output_path = os.path.join(output_dir, "Final_3Month_Forecast_FIXED.csv")
+file_name = "Final_5Month_Forecast_DYNAMIC.csv"
+
+project_path = os.path.join(output_dir, file_name)
 
 monthly["Predicted_Tickets"] = monthly["Predicted_Tickets"].round().astype(int)
-monthly.to_csv(output_path, index=False)
+monthly.to_csv(project_path, index=False)
 
-print(f"\n✅ Forecast saved to: {output_path}")
+print(f"\n✅ Forecast saved to project folder: {project_path}")
+
+
+# ---- Save to Desktop (NEW) ----
+desktop_path = os.path.join(os.path.expanduser("~"), "Desktop", file_name)
+
+monthly.to_csv(desktop_path, index=False)
+
+print(f"✅ Forecast also saved to Desktop: {desktop_path}")
 
 # --------------------------------------------------
 # 11. Display
 # --------------------------------------------------
-print("\nPrediction vs Actual (Jan 2025 – Mar 2026)")
+print("\nPrediction vs Actual (Jan–April 2026)")
 print(
     monthly[
         (monthly["Month"] >= "2026-01-01") &
-        (monthly["Month"] <= "2026-03-01")
+        (monthly["Month"] <= "2026-04-01")
     ][["Month", "Total_Tickets", "Predicted_Tickets", "Absolute_Error"]]
 )
 

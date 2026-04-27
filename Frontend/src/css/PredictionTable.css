@@ -1,0 +1,36 @@
+.table-container {
+  background: #ffffff;
+  padding: 20px;
+  margin-top: 20px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.table-container h3 {
+  font-size: 16px;
+  margin-bottom: 15px;
+  color: #111827;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-size: 13px;
+  color: #6b7280;
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+td {
+  padding: 10px;
+  font-size: 14px;
+  color: #111827;
+}
+
+tbody tr:hover {
+  background: #f9fafb;
+}
