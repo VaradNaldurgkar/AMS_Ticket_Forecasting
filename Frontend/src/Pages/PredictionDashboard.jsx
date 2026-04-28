@@ -2,8 +2,14 @@ import "../css/Dashboard.css";
 import PredictionChart from "../components/charts/PredictionChart";
 import { predictionData } from "../data/sampleData";
 
-// ✅ FIXED: consistent folder naming (important for production)
+// ✅ Recharts
+import { LineChart, Line, ResponsiveContainer } from "recharts";
+
+// ✅ Existing
 import HealthSummary from "../components/Summary/HealthSummary";
+
+// ✅ Insight Card
+import InsightCard from "../components/Insight/InsightCard";
 
 const PredictionDashboard = () => {
 
@@ -18,43 +24,78 @@ const PredictionDashboard = () => {
   return (
     <div className="dashboard">
 
-      {/* ✅ NEW: HEALTH SUMMARY (TOP STRIP) */}
+      {/* HEALTH SUMMARY */}
       <HealthSummary />
 
       {/* KPI ROW */}
       <div className="kpi-row">
         {kpiData.map((item, index) => {
+
           const error = Math.abs(item.actual - item.predicted);
+          const deviation = ((error / item.actual) * 100).toFixed(1);
+          const isHigh = deviation > 2;
+
+          // ✅ FIXED: Better variation for visible trend
+          const trendData = [
+            { v: item.actual * 0.9 },
+            { v: item.actual * 1.05 },
+            { v: item.actual * 0.95 },
+            { v: item.actual * 1.1 },
+            { v: item.actual },
+          ];
 
           return (
             <div className="kpi-card month-card" key={index}>
               <div className="kpi-header">{item.month}</div>
 
               <div className="kpi-body">
-                <div className="kpi-block">
-                  <span className="kpi-label">Actual</span>
-                  <span className="kpi-value">{item.actual}</span>
+
+                {/* ACTUAL vs PREDICTED */}
+                <div className="kpi-main">
+                  <div>
+                    <span className="kpi-label">Actual</span>
+                    <span className="kpi-value">{item.actual}</span>
+                  </div>
+
+                  <div>
+                    <span className="kpi-label">Predicted</span>
+                    <span className="kpi-value">{item.predicted}</span>
+                  </div>
                 </div>
 
-                <div className="kpi-block">
-                  <span className="kpi-label">Predicted</span>
-                  <span className="kpi-value">{item.predicted}</span>
+                {/* DEVIATION */}
+                <div className={`kpi-deviation ${isHigh ? "red" : "green"}`}>
+                  {isHigh ? "↓" : "↑"} {deviation}%
                 </div>
+
+                {/* ✅ FIXED: Proper sparkline */}
+                <div className="kpi-sparkline">
+                  <ResponsiveContainer width="100%" height={60}>
+                    <LineChart data={trendData}>
+                      <Line
+                        type="monotone"
+                        dataKey="v"
+                        stroke={isHigh ? "#dc2626" : "#16a34a"}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
               </div>
 
-              <div className={`kpi-footer ${error > 100 ? "high" : "low"}`}>
-                Error: {error.toFixed(0)}
+              {/* FOOTER */}
+              <div className="kpi-footer">
+                Error: {error.toFixed(0)} tickets
               </div>
+
             </div>
           );
         })}
 
-        {/* APRIL INSIGHT */}
-        <div className="kpi-card anomaly">
-          <div className="kpi-header">April Insight</div>
-          <h3 className="anomaly-title">High Deviation</h3>
-          <p className="anomaly-text">Actual: 1306 vs Predicted: 2809</p>
-        </div>
+        {/* INSIGHT CARD */}
+        <InsightCard />
       </div>
 
       {/* CHART */}
