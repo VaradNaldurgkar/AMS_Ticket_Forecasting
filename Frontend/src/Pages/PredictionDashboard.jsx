@@ -2,6 +2,9 @@ import "../css/Dashboard.css";
 import PredictionChart from "../components/charts/PredictionChart";
 import { predictionData } from "../data/sampleData";
 
+// ✅ FIXED: consistent folder naming (important for production)
+import HealthSummary from "../components/Summary/HealthSummary";
+
 const PredictionDashboard = () => {
 
   const kpiData = predictionData.slice(0, 3);
@@ -14,6 +17,9 @@ const PredictionDashboard = () => {
 
   return (
     <div className="dashboard">
+
+      {/* ✅ NEW: HEALTH SUMMARY (TOP STRIP) */}
+      <HealthSummary />
 
       {/* KPI ROW */}
       <div className="kpi-row">
@@ -57,7 +63,7 @@ const PredictionDashboard = () => {
         <PredictionChart data={predictionData} />
       </div>
 
-      {/* ✅ IMPROVED FORECAST */}
+      {/* FORECAST */}
       <div className="forecast-card">
 
         <div className="forecast-header">
