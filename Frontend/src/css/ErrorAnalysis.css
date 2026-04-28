@@ -1,0 +1,117 @@
+.error-card {
+  background: white;
+  padding: 16px; /* slightly reduced */
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+
+  height: fit-content;        /* 🔥 prevents full stretch */
+  max-height: 320px;          /* optional: keeps it compact */
+}
+
+/* HEADER */
+.error-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px; /* tighter */
+}
+
+.error-header h4 {
+  margin: 0;
+  font-size: 15px; /* slightly smaller */
+  font-weight: 600;
+}
+
+.error-sub {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* ROW */
+.error-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 55px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px; /* 🔥 reduced spacing */
+}
+
+/* LEFT */
+.error-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.error-icon {
+  font-size: 13px;
+}
+
+.error-month {
+  font-size: 12px; /* slightly smaller */
+  color: #374151;
+}
+
+/* BAR */
+.error-bar-bg {
+  height: 6px; /* 🔥 slimmer bar */
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.error-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+/* COLORS */
+.error-bar-fill.good {
+  background: #16a34a;
+}
+
+.error-bar-fill.moderate {
+  background: #f59e0b;
+}
+
+.error-bar-fill.high {
+  background: #dc2626;
+}
+
+/* VALUE COLORS */
+.error-value {
+  font-size: 12px; /* smaller */
+  font-weight: 500;
+}
+
+.error-value.good {
+  color: #16a34a;
+}
+
+.error-value.moderate {
+  color: #f59e0b;
+}
+
+.error-value.high {
+  color: #dc2626;
+}
+
+/* LEGEND */
+.error-legend {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 11px; /* smaller */
+}
+
+.legend-item.good {
+  color: #16a34a;
+}
+
+.legend-item.moderate {
+  color: #f59e0b;
+}
+
+.legend-item.high {
+  color: #dc2626;
+}

@@ -190,3 +190,10 @@
   font-size: 13px;
   color: #16a34a;
 }
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 20px;
+  align-items: stretch; 
+}

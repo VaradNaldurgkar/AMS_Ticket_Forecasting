@@ -11,3 +11,10 @@
   height: 300px;   /* without this → chart won't render */
 }
 
+.chart-wrapper {
+  position: relative;
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
+}

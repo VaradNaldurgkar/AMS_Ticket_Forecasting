@@ -7,9 +7,10 @@ import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 // ✅ Existing
 import HealthSummary from "../components/Summary/HealthSummary";
-
-// ✅ Insight Card
 import InsightCard from "../components/Insight/InsightCard";
+
+// ✅ NEW: Error Analysis
+import ErrorAnalysis from "../components/Analytics/ErrorAnalysis";
 
 const PredictionDashboard = () => {
 
@@ -35,7 +36,6 @@ const PredictionDashboard = () => {
           const deviation = ((error / item.actual) * 100).toFixed(1);
           const isHigh = deviation > 2;
 
-          // ✅ FIXED: Better variation for visible trend
           const trendData = [
             { v: item.actual * 0.9 },
             { v: item.actual * 1.05 },
@@ -50,7 +50,6 @@ const PredictionDashboard = () => {
 
               <div className="kpi-body">
 
-                {/* ACTUAL vs PREDICTED */}
                 <div className="kpi-main">
                   <div>
                     <span className="kpi-label">Actual</span>
@@ -63,12 +62,10 @@ const PredictionDashboard = () => {
                   </div>
                 </div>
 
-                {/* DEVIATION */}
                 <div className={`kpi-deviation ${isHigh ? "red" : "green"}`}>
                   {isHigh ? "↓" : "↑"} {deviation}%
                 </div>
 
-                {/* ✅ FIXED: Proper sparkline */}
                 <div className="kpi-sparkline">
                   <ResponsiveContainer width="100%" height={60}>
                     <LineChart data={trendData}>
@@ -85,7 +82,6 @@ const PredictionDashboard = () => {
 
               </div>
 
-              {/* FOOTER */}
               <div className="kpi-footer">
                 Error: {error.toFixed(0)} tickets
               </div>
@@ -98,10 +94,18 @@ const PredictionDashboard = () => {
         <InsightCard />
       </div>
 
-      {/* CHART */}
-      <div className="chart-container">
-        <h3>Actual vs Predicted Tickets</h3>
-        <PredictionChart data={predictionData} />
+      {/* 🔥 MAIN ANALYTICS GRID */}
+      <div className="analytics-grid">
+
+        {/* CHART */}
+        <div className="chart-container">
+          <h3>Actual vs Predicted Tickets</h3>
+          <PredictionChart data={predictionData} />
+        </div>
+
+        {/* ✅ NEW: ERROR ANALYSIS SIDE PANEL */}
+        <ErrorAnalysis data={predictionData} />
+
       </div>
 
       {/* FORECAST */}
