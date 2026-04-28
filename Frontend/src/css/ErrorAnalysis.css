@@ -4,8 +4,8 @@
   border-radius: 14px;
   box-shadow: 0 6px 16px rgba(0,0,0,0.05);
 
-  height: fit-content;        /* 🔥 prevents full stretch */
-  max-height: 320px;          /* optional: keeps it compact */
+  height: fit-content;     
+  max-height: 320px;          
 }
 
 /* HEADER */
@@ -33,7 +33,7 @@
   grid-template-columns: 120px 1fr 55px;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px; /* 🔥 reduced spacing */
+  margin-bottom: 10px; 
 }
 
 /* LEFT */

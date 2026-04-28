@@ -2,14 +2,14 @@ import "../css/Dashboard.css";
 import PredictionChart from "../components/charts/PredictionChart";
 import { predictionData } from "../data/sampleData";
 
-// ✅ Recharts
+// Recharts
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 
-// ✅ Existing
+// Existing
 import HealthSummary from "../components/Summary/HealthSummary";
 import InsightCard from "../components/Insight/InsightCard";
 
-// ✅ NEW: Error Analysis
+// Error Analysis
 import ErrorAnalysis from "../components/Analytics/ErrorAnalysis";
 
 const PredictionDashboard = () => {
@@ -85,62 +85,111 @@ const PredictionDashboard = () => {
               <div className="kpi-footer">
                 Error: {error.toFixed(0)} tickets
               </div>
-
             </div>
           );
         })}
 
-        {/* INSIGHT CARD */}
         <InsightCard />
       </div>
 
-      {/* 🔥 MAIN ANALYTICS GRID */}
+      {/* MAIN ANALYTICS GRID */}
       <div className="analytics-grid">
 
-        {/* CHART */}
+        {/* LEFT: CHART */}
         <div className="chart-container">
           <h3>Actual vs Predicted Tickets</h3>
           <PredictionChart data={predictionData} />
         </div>
 
-        {/* ✅ NEW: ERROR ANALYSIS SIDE PANEL */}
-        <ErrorAnalysis data={predictionData} />
+        {/* RIGHT PANEL */}
+        <div className="right-panel">
+
+          <ErrorAnalysis data={predictionData} />
+
+          <div className="changes-card">
+            <h4>Key Changes This Month</h4>
+
+            <div className="change-item">
+              <span className="change-dot green"></span>
+              Ticket volume decreased by 12% compared to March.
+            </div>
+
+            <div className="change-item">
+              <span className="change-dot blue"></span>
+              P1 incidents decreased by 30%.
+            </div>
+
+            <div className="change-item">
+              <span className="change-dot orange"></span>
+              Backend issues reduced by 18%.
+            </div>
+
+            <button className="report-btn">
+              View Detailed Report →
+            </button>
+          </div>
+
+        </div>
 
       </div>
 
-      {/* FORECAST */}
+      {/* ===== ENHANCED FORECAST ===== */}
       <div className="forecast-card">
 
         <div className="forecast-header">
-          <h3>3-Month Forecast</h3>
-          <span className="forecast-sub">May–Jul 2026</span>
+          <div>
+            <h3>3-Month Forecast</h3>
+            <span className="forecast-sub">May–Jul 2026</span>
+          </div>
+
+          <div className="forecast-columns">
+            <span>Forecast</span>
+            <span>Confidence Range</span>
+            <span>vs Previous 3M</span>
+            <span>Trend</span>
+          </div>
         </div>
 
-        {forecastData.map((item, index) => (
-          <div className="forecast-row" key={index}>
+        {forecastData.map((item, index) => {
+          const isPositive = item.percent.includes("+");
 
-            <div className="forecast-month">
-              {item.month}
-            </div>
+          return (
+            <div className="forecast-row-new" key={index}>
 
-            <div className="forecast-bar-bg">
-              <div
-                className="forecast-bar-fill"
-                style={{ width: `${item.width}%` }}
-              ></div>
-            </div>
+              <div className="forecast-month">{item.month}</div>
 
-            <div className="forecast-right">
-              <span className="forecast-value">
+              <div className="forecast-bar-wrapper">
+                <div className="forecast-bar-bg">
+                  <div
+                    className="forecast-bar-fill"
+                    style={{ width: `${item.width}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="forecast-value">
                 {item.value.toLocaleString()}
-              </span>
-              <span className="forecast-change">
-                {item.percent}
-              </span>
-            </div>
+              </div>
 
-          </div>
-        ))}
+              <div className="forecast-range">
+                {Math.floor(item.value * 0.95).toLocaleString()} – {Math.floor(item.value * 1.05).toLocaleString()}
+              </div>
+
+              <div className={`forecast-change ${isPositive ? "green" : "red"}`}>
+                {item.percent}
+              </div>
+
+              <div className={`forecast-trend ${isPositive ? "green" : "red"}`}>
+                {isPositive ? "↑" : "↓"}
+              </div>
+
+            </div>
+          );
+        })}
+
+        <div className="forecast-note">
+          ℹ Forecasts are based on historical data and ML model predictions with 91% confidence.
+        </div>
 
       </div>
 

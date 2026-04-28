@@ -24,7 +24,7 @@
   flex-direction: column;
   justify-content: space-between;
   transition: 0.2s ease;
-  height: 200px; /* ✅ ensures consistent height */
+  height: 200px;
 }
 
 .kpi-card:hover {
@@ -43,7 +43,7 @@
   margin-top: 10px;
 }
 
-/* ACTUAL + PREDICTED ROW */
+/* ACTUAL + PREDICTED */
 .kpi-main {
   display: flex;
   justify-content: space-between;
@@ -90,7 +90,7 @@
   margin-top: 8px;
 }
 
-/* ===== INSIGHT CARD (APRIL) ===== */
+/* ===== INSIGHT CARD ===== */
 .anomaly {
   background: #fff7ed;
   border: 1px solid #fdba74;
@@ -116,16 +116,20 @@
   box-shadow: 0 6px 16px rgba(0,0,0,0.05);
 }
 
-/* ===== FORECAST CARD ===== */
+/* ===== FORECAST (NEW CLEAN VERSION) ===== */
 .forecast-card {
   background: white;
   padding: 22px;
   border-radius: 14px;
   box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+  margin-top: 24px;
 }
 
 /* HEADER */
 .forecast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 18px;
 }
 
@@ -140,12 +144,21 @@
   color: #6b7280;
 }
 
-/* ROW */
-.forecast-row {
+/* COLUMN HEADERS */
+.forecast-columns {
   display: grid;
-  grid-template-columns: 90px 1fr 130px;
+  grid-template-columns: 120px 160px 120px 60px;
+  gap: 20px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ROW */
+.forecast-row-new {
+  display: grid;
+  grid-template-columns: 80px 1fr 120px 160px 120px 60px;
   align-items: center;
-  gap: 14px;
+  gap: 20px;
   margin-bottom: 16px;
 }
 
@@ -155,7 +168,11 @@
   color: #374151;
 }
 
-/* BAR BACKGROUND */
+/* BAR */
+.forecast-bar-wrapper {
+  width: 100%;
+}
+
 .forecast-bar-bg {
   width: 100%;
   height: 10px;
@@ -164,19 +181,11 @@
   overflow: hidden;
 }
 
-/* BAR FILL */
 .forecast-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, #3b82f6, #60a5fa);
   border-radius: 999px;
   transition: width 0.4s ease;
-}
-
-/* RIGHT SIDE */
-.forecast-right {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
 /* VALUE */
@@ -185,15 +194,107 @@
   color: #111827;
 }
 
-/* CHANGE */
-.forecast-change {
+/* RANGE */
+.forecast-range {
   font-size: 13px;
+  color: #6b7280;
+}
+
+/* CHANGE */
+.forecast-change.green {
   color: #16a34a;
 }
 
+.forecast-change.red {
+  color: #dc2626;
+}
+
+/* TREND */
+.forecast-trend {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.forecast-trend.green {
+  color: #16a34a;
+}
+
+.forecast-trend.red {
+  color: #dc2626;
+}
+
+/* NOTE */
+.forecast-note {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ===== ANALYTICS GRID ===== */
 .analytics-grid {
   display: grid;
   grid-template-columns: 3fr 1fr;
   gap: 20px;
-  align-items: stretch; 
+  align-items: stretch;
+}
+
+/* RIGHT PANEL */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* KEY CHANGES */
+.changes-card {
+  background: white;
+  padding: 16px;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+}
+
+.changes-card h4 {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.change-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: #374151;
+}
+
+/* DOTS */
+.change-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.change-dot.green { background: #16a34a; }
+.change-dot.blue { background: #2563eb; }
+.change-dot.orange { background: #f59e0b; }
+
+/* BUTTON */
+.report-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 9px;
+  border: none;
+  border-radius: 10px;
+  background: #10b981;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.report-btn:hover {
+  background: #059669;
 }
