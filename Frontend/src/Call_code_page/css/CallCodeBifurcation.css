@@ -1,0 +1,138 @@
+/* PAGE */
+.ccb-page {
+  padding: 24px 28px;
+  background: #fff;
+  min-height: 100vh;
+  font-family: sans-serif;
+}
+
+.ccb-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 14px;
+  color: #111;
+}
+
+/* .ccb-select removed — replaced by custom dropdown in JSX */
+
+/* KPI ROW — layout only, styles live in KPICard.css */
+.ccb-kpi-row {
+  margin-bottom: 24px;
+}
+
+/* MAIN LAYOUT */
+.ccb-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;          /* ← back to "start", not "stretch" */
+}
+
+/* LEFT MAIN */
+.ccb-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Two pies side by side */
+.ccb-pies-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.ccb-pie-box {
+  border: 1px solid #ebebeb;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
+}
+
+/* Bar chart */
+.ccb-bar-box {
+  border: 1px solid #ebebeb;
+  border-radius: 10px;
+  padding: 12px 16px;
+  background: #fff;
+}
+
+/* RIGHT SIDEBAR */
+.ccb-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* CUSTOM DROPDOWN */
+.ccb-dropdown {
+  position: relative;
+  width: 220px;
+  margin-bottom: 20px;
+  z-index: 100;
+}
+
+.ccb-dropdown-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ccb-dropdown-trigger:hover {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.08);
+}
+
+.ccb-dropdown-chevron {
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.ccb-dropdown-chevron.open {
+  transform: rotate(180deg);
+}
+
+.ccb-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  overflow: hidden;
+}
+
+.ccb-dropdown-item {
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.ccb-dropdown-item:hover {
+  background: #f0fdf9;
+  color: #0f766e;
+}
+
+.ccb-dropdown-item.active {
+  background: #0f766e;
+  color: #ffffff;
+  font-weight: 500;
+}

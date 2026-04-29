@@ -1,0 +1,12 @@
+.bar-wrapper {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.bar-title {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  text-align: center;
+}
