@@ -1,24 +1,35 @@
 import pandas as pd
+import glob
+import os
 
 # ========================================================
-# STEP 0: FILE PATHS
+# STEP 0: RESOLVE PROJECT ROOT & RAW DATA PATH
 # ========================================================
 
-im_path = "data/raw/IM Raw Data Report April 25 to till  April 26.xlsx"
-rr_path = "data/raw/RR RF Raw Data Report April 25 to till April 26.xlsx"
+BASE_DIR = os.path.dirname(
+    os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))
+    )
+)
+
+RAW_DIR = os.path.join(BASE_DIR, "data", "raw")
+PROCESSED_DIR = os.path.join(BASE_DIR, "data", "processed")
+
+# Load all IM and RR files
+im_files = glob.glob(os.path.join(RAW_DIR, "*IM*.xlsx"))
+rr_files = glob.glob(os.path.join(RAW_DIR, "*RR*.xlsx"))
+
+if not im_files or not rr_files:
+    raise FileNotFoundError(f"IM or RR raw files not found in {RAW_DIR}")
+
+df_im = pd.concat([pd.read_excel(f) for f in im_files], ignore_index=True)
+df_rr = pd.concat([pd.read_excel(f) for f in rr_files], ignore_index=True)
 
 # ========================================================
-# STEP 1: LOAD FILES
+# STEP 1: CLEAN COLUMN NAMES
 # ========================================================
 
-df_im = pd.read_excel(im_path)
-df_rr = pd.read_excel(rr_path)
-
-# ========================================================
-# STEP 2: CLEAN COLUMN NAMES
-# ========================================================
-
-for df in [df_im, df_rr]:
+for df in (df_im, df_rr):
     df.columns = (
         df.columns
         .str.replace("\n", " ", regex=False)
@@ -26,7 +37,7 @@ for df in [df_im, df_rr]:
     )
 
 # ========================================================
-# STEP 3: STANDARDIZE RR COLUMN NAMES
+# STEP 2: STANDARDIZE RR COLUMN NAMES
 # ========================================================
 
 df_rr = df_rr.rename(columns={
@@ -36,14 +47,14 @@ df_rr = df_rr.rename(columns={
 })
 
 # ========================================================
-# STEP 4: ADD TICKET TYPE
+# STEP 3: ADD TICKET TYPE
 # ========================================================
 
 df_im["Ticket_Type"] = "Incident"
 df_rr["Ticket_Type"] = "Service Request"
 
 # ========================================================
-# STEP 5: SELECT REQUIRED COMMON COLUMNS
+# STEP 4: SELECT REQUIRED COMMON COLUMNS
 # ========================================================
 
 required_columns = [
@@ -60,13 +71,13 @@ df_im = df_im[required_columns]
 df_rr = df_rr[required_columns]
 
 # ========================================================
-# STEP 6: COMBINE IM + RR DATA
+# STEP 5: COMBINE IM + RR DATA
 # ========================================================
 
 df = pd.concat([df_im, df_rr], ignore_index=True)
 
 # ========================================================
-# STEP 7: DATE DERIVATION
+# STEP 6: DATE DERIVATION (ROBUST)
 # ========================================================
 
 df["Reported_Date"] = pd.to_datetime(
@@ -79,6 +90,15 @@ df["Reported_Date"] = df["Reported_Date"].fillna(
 )
 
 # ========================================================
+# STEP 7: FILTER DATE RANGE (2024 → MAR 2026) ✅✅✅
+# ========================================================
+
+df = df[
+    (df["Reported_Date"] >= "2024-01-01") &
+    (df["Reported_Date"] <= "2026-03-31")
+]
+
+# ========================================================
 # STEP 8: MONTH DERIVATION
 # ========================================================
 
@@ -88,16 +108,12 @@ df["Month"] = df["Reported_Date"].dt.to_period("M").astype(str)
 # STEP 9: LOCATION DERIVATION
 # ========================================================
 
-df["Location"] = "Unknown"
+df["Location"] = df["CI Location"]
 
-if "CI Location" in df.columns:
-    df["Location"] = df["CI Location"]
-
-if "CI Location.1" in df.columns:
-    df["Location"] = df["Location"].where(
-        df["Location"].notna() & (df["Location"].str.strip() != ""),
-        df["CI Location.1"]
-    )
+df["Location"] = df["Location"].where(
+    df["Location"].notna() & (df["Location"].str.strip() != ""),
+    df["CI Location.1"]
+)
 
 df["Location"] = df["Location"].fillna("Unknown")
 
@@ -105,16 +121,16 @@ df["Location"] = df["Location"].fillna("Unknown")
 # STEP 10: MONTHLY AGGREGATION
 # ========================================================
 
-monthly_df = df.groupby(["Month", "Location"]).agg(
+monthly_df = df.groupby(["Month", "Location"], as_index=False).agg(
     Total_Tickets=("Incident ID", "count"),
     Incidents=("Ticket_Type", lambda x: (x == "Incident").sum()),
     Service_Requests=("Ticket_Type", lambda x: (x == "Service Request").sum())
-).reset_index()
+)
 
 monthly_df = monthly_df.sort_values(by=["Month", "Location"])
 
 # ========================================================
-# STEP 11: PRIORITY / COMPLEXITY BREAKDOWN
+# STEP 11: PRIORITY BREAKDOWN
 # ========================================================
 
 priority_df = df.pivot_table(
@@ -137,16 +153,14 @@ monthly_df = monthly_df.merge(
 )
 
 # ========================================================
-# STEP 12: SAVE FINAL OUTPUT TO DESKTOP ✅
+# STEP 12: SAVE OUTPUT
 # ========================================================
 
-desktop_output_path = (
-    r"C:\Users\S08OFJF\Desktop\AMS_Yearly_Aggregated.csv"
-)
+os.makedirs(PROCESSED_DIR, exist_ok=True)
+output_path = os.path.join(PROCESSED_DIR, "AMS_Yearly_Aggregated.csv")
 
-monthly_df.to_csv(desktop_output_path, index=False)
+monthly_df.to_csv(output_path, index=False)
 
-print("\n✅ Final Dataset with Priority/Complexity Breakdown:")
-print(monthly_df.head(10))
-
-print(f"\n✅ Aggregated dataset saved to: {desktop_output_path}")
+print("\n✅ Aggregation completed successfully")
+print("✅ Date range:", monthly_df["Month"].min(), "to", monthly_df["Month"].max())
+print(f"✅ Saved to: {output_path}")

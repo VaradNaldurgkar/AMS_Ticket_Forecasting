@@ -1,15 +1,19 @@
-node_modules/
-.env
-
 # Python
 __pycache__/
 *.pyc
-venv/
-.env
 
-# ML models (optional if large)
-*.pkl
-*.joblib
+# Node
+node_modules/
+
+# VS Code
+.vscode/
+
+# Raw data
+Backend/data/raw/
+
+# Generated data
+Backend/data/processed/*.csv
 
 # OS
 .DS_Store
+Thumbs.db
