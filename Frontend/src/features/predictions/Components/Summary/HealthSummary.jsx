@@ -47,7 +47,7 @@ const HealthSummary = () => {
       <div className="summary-card">
         <h4>Forecast Accuracy</h4>
         <p className="value green">{kpis.accuracy}%</p>
-        <span>Excellent</span>
+        <span>Accuracy</span>
       </div>
 
       {/* Avg Error */}

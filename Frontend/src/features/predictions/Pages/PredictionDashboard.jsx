@@ -162,7 +162,7 @@ const PredictionDashboard = () => {
         <div className="forecast-header">
           <div>
             <h3>Future Forecast</h3>
-            <span className="forecast-sub">Next 6 Months</span>
+            <span className="forecast-sub">Next 3 Months</span>
           </div>
         </div>
 

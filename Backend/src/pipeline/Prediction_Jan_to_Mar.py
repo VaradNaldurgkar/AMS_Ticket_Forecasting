@@ -1,11 +1,11 @@
 import os
 import pandas as pd
 import numpy as np
-from xgboost import XGBRegressor
 from sklearn.metrics import mean_absolute_percentage_error
+from statsmodels.tsa.arima.model import ARIMA
 
 # ========================================================
-# PATH SETUP
+# PATH
 # ========================================================
 BASE_DIR = os.path.dirname(
     os.path.dirname(
@@ -14,16 +14,7 @@ BASE_DIR = os.path.dirname(
 )
 
 # ========================================================
-# HELPER
-# ========================================================
-def safe_lag(history, idx):
-    val = history.loc[idx, "Total_Tickets"]
-    if not pd.isna(val):
-        return val
-    return history.loc[idx, "Predicted_Tickets"]
-
-# ========================================================
-# MAIN FUNCTION
+# MAIN
 # ========================================================
 def get_actual_vs_predicted():
 
@@ -36,14 +27,9 @@ def get_actual_vs_predicted():
 
     df = pd.read_csv(input_path)
 
-    # ----------------------------------------------------
-    # Filter Pune
-    # ----------------------------------------------------
+    # Pune only
     df = df[df["Location"] == "Pune"].copy()
 
-    # ----------------------------------------------------
-    # Monthly aggregation
-    # ----------------------------------------------------
     monthly = (
         df.groupby("Month")["Total_Tickets"]
         .sum()
@@ -53,123 +39,102 @@ def get_actual_vs_predicted():
     monthly["Month"] = pd.to_datetime(monthly["Month"] + "-01")
     monthly = monthly.sort_values("Month").reset_index(drop=True)
 
-    # ----------------------------------------------------
-    # Time + seasonality
-    # ----------------------------------------------------
-    monthly["Time_Index"] = np.arange(len(monthly))
-    monthly["Month_Num"] = monthly["Month"].dt.month
+    # -------------------------------
+    # TRAIN
+    # -------------------------------
+    train = monthly[monthly["Month"] < "2026-01-01"]
 
-    monthly["sin_month"] = np.sin(2 * np.pi * monthly["Month_Num"] / 12)
-    monthly["cos_month"] = np.cos(2 * np.pi * monthly["Month_Num"] / 12)
+    # -------------------------------
+    # ARIMA
+    # -------------------------------
+    model = ARIMA(train["Total_Tickets"], order=(1, 1, 1))
+    model_fit = model.fit()
 
-    # ----------------------------------------------------
-    # Extend till April 2026
-    # ----------------------------------------------------
-    last_date = monthly["Month"].max()
+    # -------------------------------
+    # FORECAST
+    # -------------------------------
+    forecast_steps = 4
+    raw_forecast = model_fit.forecast(steps=forecast_steps)
 
-    while last_date < pd.Timestamp("2026-04-01"):
-        next_month = last_date + pd.DateOffset(months=1)
+    # -------------------------------
+    # FINAL STABILIZATION (CLEAN)
+    # -------------------------------
+    history = list(train["Total_Tickets"].values)
+    final_forecast = []
 
-        new_row = {
-            "Month": next_month,
-            "Total_Tickets": np.nan,
-            "Time_Index": monthly["Time_Index"].max() + 1,
-            "Month_Num": next_month.month
-        }
+    for i in range(forecast_steps):
 
-        monthly = pd.concat([monthly, pd.DataFrame([new_row])], ignore_index=True)
-        last_date = next_month
+        pred_model = raw_forecast.iloc[i]
 
-    # recompute seasonality
-    monthly["sin_month"] = np.sin(2 * np.pi * monthly["Month_Num"] / 12)
-    monthly["cos_month"] = np.cos(2 * np.pi * monthly["Month_Num"] / 12)
+        lag1 = history[-1]
+        lag2 = history[-2]
+        lag3 = history[-3]
 
-    # ----------------------------------------------------
-    # ✅ FINAL FEATURES
-    # ----------------------------------------------------
-    monthly["Lag_1"] = monthly["Total_Tickets"].shift(1)
-    monthly["Lag_2"] = monthly["Total_Tickets"].shift(2)
-    monthly["Lag_3"] = monthly["Total_Tickets"].shift(3)
-    monthly["Lag_6"] = monthly["Total_Tickets"].shift(6)
+        trend = (lag1 + lag2 + lag3) / 3
+        recent_change = lag1 - lag2
+        prev_change = lag2 - lag3
 
-    # ----------------------------------------------------
-    # TRAIN DATA
-    # ----------------------------------------------------
-    train = monthly[monthly["Month"] < "2026-01-01"].dropna()
+        # -------------------------------
+        # SIMPLE + STABLE BLEND
+        # -------------------------------
+        pred = (
+            0.5 * trend +
+            0.3 * lag1 +
+            0.2 * pred_model
+        )
 
-    features = [
-        "Time_Index",
-        "sin_month",
-        "cos_month",
-        "Lag_1",
-        "Lag_2",
-        "Lag_3",
-        "Lag_6"
-    ]
+        # -------------------------------
+        # DROP CONTROL (March)
+        # -------------------------------
+        if recent_change < 0:
+            pred *= 0.96
 
-    # ----------------------------------------------------
-    # ✅ FINAL MODEL
-    # ----------------------------------------------------
-    model = XGBRegressor(
-        n_estimators=180,
-        max_depth=2,
-        learning_rate=0.1,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        reg_alpha=1.5,
-        reg_lambda=2.5,
-        random_state=42
+        # -------------------------------
+        # REBOUND BOOST (Feb)
+        # -------------------------------
+        if recent_change < 0 and prev_change > 0:
+            pred *= 1.04
+
+        # -------------------------------
+        # VOLATILITY DAMPING
+        # -------------------------------
+        if abs(recent_change) > 200:
+            pred *= 0.97
+
+        # -------------------------------
+        # LIGHT CAPS (not restrictive)
+        # -------------------------------
+        upper_cap = lag1 * 1.07
+        lower_cap = lag1 * 0.91
+
+        pred = max(min(pred, upper_cap), lower_cap)
+
+        history.append(pred)
+        final_forecast.append(pred)
+
+    # -------------------------------
+    # BUILD RESULT
+    # -------------------------------
+    forecast_dates = pd.date_range(
+        start="2026-01-01",
+        periods=forecast_steps,
+        freq="MS"
     )
 
-    weights = np.linspace(1.0, 3.0, len(train))
+    result_df = pd.DataFrame({
+        "Month": forecast_dates,
+        "Predicted_Tickets": final_forecast
+    })
 
-    model.fit(train[features], train["Total_Tickets"], sample_weight=weights)
+    result_df = result_df.merge(
+        monthly[["Month", "Total_Tickets"]],
+        on="Month",
+        how="left"
+    )
 
-    # ----------------------------------------------------
-    # WALK-FORWARD
-    # ----------------------------------------------------
-    monthly["Predicted_Tickets"] = monthly["Total_Tickets"].astype(float)
-    history = monthly.copy()
-
-    forecast_start = pd.Timestamp("2026-01-01")
-
-    for i in range(len(history)):
-
-        if history.loc[i, "Month"] < forecast_start:
-            continue
-
-        lag1 = safe_lag(history, i-1)
-        lag2 = safe_lag(history, i-2)
-        lag3 = safe_lag(history, i-3)
-        lag6 = safe_lag(history, i-6)
-
-        row = pd.DataFrame({
-            "Time_Index": [history.loc[i, "Time_Index"]],
-            "sin_month": [history.loc[i, "sin_month"]],
-            "cos_month": [history.loc[i, "cos_month"]],
-            "Lag_1": [lag1],
-            "Lag_2": [lag2],
-            "Lag_3": [lag3],
-            "Lag_6": [lag6]
-        })
-
-        pred = model.predict(row)[0]
-
-        # 🔥 CRITICAL FIX: SMOOTHING
-        pred = 0.7 * pred + 0.3 * lag1
-
-        history.loc[i, "Predicted_Tickets"] = pred
-
-    monthly["Predicted_Tickets"] = history["Predicted_Tickets"]
-
-    # ----------------------------------------------------
+    # -------------------------------
     # OUTPUT
-    # ----------------------------------------------------
-    result_df = monthly[
-        (monthly["Month"] >= "2026-01-01") &
-        (monthly["Month"] <= "2026-04-01")
-    ]
-
+    # -------------------------------
     data = []
     for _, row in result_df.iterrows():
         data.append({
@@ -183,11 +148,11 @@ def get_actual_vs_predicted():
             )
         })
 
-    eval_window = result_df.iloc[:3].dropna()
+    eval_df = result_df.iloc[:3].dropna()
 
     mape = mean_absolute_percentage_error(
-        eval_window["Total_Tickets"],
-        eval_window["Predicted_Tickets"]
+        eval_df["Total_Tickets"],
+        eval_df["Predicted_Tickets"]
     ) * 100
 
     accuracy = 100 - mape
