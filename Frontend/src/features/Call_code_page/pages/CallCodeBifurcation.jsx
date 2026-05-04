@@ -5,15 +5,16 @@ import CallCodePieChart from "../components/piechart";
 import CallCodeBarChart from "../components/barchart";
 import InsightCard from "../components/InsightCard";
 import ChannelBreakdown from "../components/ChannelBreakdown";
+import QuickStats from "../components/QuickStats";
 import "../css/CallCodeBifurcation.css";
 
 export default function CallCodeBifurcation() {
-  const categories = [...new Set(callCodeData.map(d => d.category))];
-  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+  const ALL_OPTION = "All Issues";
+  const categories = [ALL_OPTION, ...new Set(callCodeData.map(d => d.category))];
+  const [selectedCategory, setSelectedCategory] = useState(ALL_OPTION);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -24,19 +25,38 @@ export default function CallCodeBifurcation() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filteredData = callCodeData.filter(d => d.category === selectedCategory);
+  // When "All Issues" is selected, aggregate counts across all categories by callCode
+  const filteredData =
+    selectedCategory === ALL_OPTION
+      ? Object.values(
+          callCodeData.reduce((acc, d) => {
+            if (!acc[d.callCode]) {
+              acc[d.callCode] = { ...d, category: ALL_OPTION };
+            } else {
+              acc[d.callCode].count += d.count;
+            }
+            return acc;
+          }, {})
+        )
+      : callCodeData.filter(d => d.category === selectedCategory);
   const totalTickets = filteredData.reduce((s, d) => s + d.count, 0);
 
+  // Fixed: d.callCode instead of d.channel
   const chatCount = filteredData
-    .filter(d => d.channel === "Chat")
+    .filter(d => d.callCode === "Chat")
     .reduce((s, d) => s + d.count, 0);
   const chatShare = totalTickets > 0 ? Math.round((chatCount / totalTickets) * 100) : 0;
+
+  // Dynamic dominant channel instead of hardcoded "Chat"
+  const dominantChannel = filteredData.reduce(
+    (max, d) => (d.count > max.count ? d : max),
+    filteredData[0]
+  )?.callCode || "Chat";
 
   return (
     <div className="ccb-page">
       <h1 className="ccb-title">Call Code Bifurcation</h1>
 
-      {/* CUSTOM DROPDOWN */}
       <div className="ccb-dropdown" ref={dropdownRef}>
         <button
           className="ccb-dropdown-trigger"
@@ -72,7 +92,7 @@ export default function CallCodeBifurcation() {
 
       <KPICard
         total={totalTickets}
-        dominantChannel="Chat"
+        dominantChannel={dominantChannel}
         percentage={chatShare}
       />
 
@@ -105,6 +125,7 @@ export default function CallCodeBifurcation() {
             recommendation="Promote email self-service as a fallback flow to reduce dependency risk."
           />
           <ChannelBreakdown data={filteredData} />
+          <QuickStats data={filteredData} totalTickets={totalTickets} />
         </div>
       </div>
     </div>
