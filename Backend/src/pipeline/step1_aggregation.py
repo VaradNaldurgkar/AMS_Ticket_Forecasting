@@ -60,7 +60,7 @@ df_rr["Ticket_Type"] = "Service Request"
 required_columns = [
     "Incident ID",
     "Priority",
-    "Reported Date (Timezone based)",
+    "Reported Date (Timezone based)",  # kept but not used
     "Open Time (Timezone based)",
     "CI Location",
     "CI Location.1",
@@ -77,32 +77,31 @@ df_rr = df_rr[required_columns]
 df = pd.concat([df_im, df_rr], ignore_index=True)
 
 # ========================================================
-# STEP 6: DATE DERIVATION (ROBUST)
+# STEP 6: BASE DATE = OPEN TIME (STRICT) ✅
 # ========================================================
 
-df["Reported_Date"] = pd.to_datetime(
-    df["Reported Date (Timezone based)"],
+df["Open_Date"] = pd.to_datetime(
+    df["Open Time (Timezone based)"],
     errors="coerce"
 )
 
-df["Reported_Date"] = df["Reported_Date"].fillna(
-    pd.to_datetime(df["Open Time (Timezone based)"], errors="coerce")
-)
+# Drop invalid dates (Excel ignores these)
+df = df[df["Open_Date"].notna()]
 
 # ========================================================
-# STEP 7: FILTER DATE RANGE (2024 → MAR 2026) ✅✅✅
+# STEP 7: FILTER DATE RANGE (2024 → MAR 2026) ✅
 # ========================================================
 
 df = df[
-    (df["Reported_Date"] >= "2024-01-01") &
-    (df["Reported_Date"] <= "2026-03-31")
+    (df["Open_Date"] >= "2024-01-01") &
+    (df["Open_Date"] <= "2026-03-31")
 ]
 
 # ========================================================
-# STEP 8: MONTH DERIVATION
+# STEP 8: MONTH DERIVATION (FROM OPEN TIME) ✅
 # ========================================================
 
-df["Month"] = df["Reported_Date"].dt.to_period("M").astype(str)
+df["Month"] = df["Open_Date"].dt.to_period("M").astype(str)
 
 # ========================================================
 # STEP 9: LOCATION DERIVATION
@@ -111,7 +110,7 @@ df["Month"] = df["Reported_Date"].dt.to_period("M").astype(str)
 df["Location"] = df["CI Location"]
 
 df["Location"] = df["Location"].where(
-    df["Location"].notna() & (df["Location"].str.strip() != ""),
+    df["Location"].notna() & (df["Location"].astype(str).str.strip() != ""),
     df["CI Location.1"]
 )
 
@@ -122,12 +121,16 @@ df["Location"] = df["Location"].fillna("Unknown")
 # ========================================================
 
 monthly_df = df.groupby(["Month", "Location"], as_index=False).agg(
-    Total_Tickets=("Incident ID", "count"),
-    Incidents=("Ticket_Type", lambda x: (x == "Incident").sum()),
-    Service_Requests=("Ticket_Type", lambda x: (x == "Service Request").sum())
-)
+    Total_Tickets=("Incident ID", "nunique"),
 
-monthly_df = monthly_df.sort_values(by=["Month", "Location"])
+    Incidents=("Incident ID", lambda x: x[
+        df.loc[x.index, "Ticket_Type"] == "Incident"
+    ].nunique()),
+
+    Service_Requests=("Incident ID", lambda x: x[
+        df.loc[x.index, "Ticket_Type"] == "Service Request"
+    ].nunique())
+)
 
 # ========================================================
 # STEP 11: PRIORITY BREAKDOWN
@@ -137,7 +140,7 @@ priority_df = df.pivot_table(
     index=["Month", "Location"],
     columns="Priority",
     values="Incident ID",
-    aggfunc="count",
+    aggfunc="nunique",  # avoid duplicate inflation
     fill_value=0
 ).reset_index()
 
