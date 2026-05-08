@@ -5,53 +5,74 @@ import sys
 import os
 
 # --------------------------------------------------
-# FIX: Add project root (Backend) to Python path
+# ADD SRC DIRECTORY TO PYTHON PATH
 # --------------------------------------------------
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))      # .../Backend/src/api
-SRC_DIR = os.path.dirname(CURRENT_DIR)                        # .../Backend/src
-BASE_DIR = os.path.dirname(SRC_DIR)                           # .../Backend
 
-if BASE_DIR not in sys.path:
-    sys.path.append(BASE_DIR)
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+SRC_DIR = os.path.dirname(CURRENT_DIR)
+
+if SRC_DIR not in sys.path:
+    sys.path.append(SRC_DIR)
 
 # --------------------------------------------------
-# Imports (now resolvable)
+# IMPORT ROUTES
 # --------------------------------------------------
-from pipeline.step7_monthly_ticket_forecast import get_future_forecast
-from pipeline.Prediction_Jan_to_Mar import get_actual_vs_predicted
+
+from api.routes.service import (
+    router as service_router
+)
 
 from api.routes import call_code
+
+# --------------------------------------------------
+# IMPORT PIPELINES
+# --------------------------------------------------
+
+from pipeline.step7_monthly_ticket_forecast import (
+    get_future_forecast
+)
+
+from pipeline.Prediction_Jan_to_Mar import (
+    get_actual_vs_predicted
+)
+
+# --------------------------------------------------
+# FASTAPI APP
+# --------------------------------------------------
 
 app = FastAPI()
 
 # --------------------------------------------------
-# CORS (for React)
+# CORS
 # --------------------------------------------------
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # later restrict to your frontend origin
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # --------------------------------------------------
-# 1. Actual vs Predicted (Jan–Apr)
+# PREDICTION APIs
 # --------------------------------------------------
+
 @app.get("/api/prediction/actual-vs-predicted")
 def actual_vs_predicted():
+
     return get_actual_vs_predicted()
 
-# --------------------------------------------------
-# 2. Future Forecast (May–Oct)
-# --------------------------------------------------
 @app.get("/api/prediction/future")
 def future_forecast():
+
     return get_future_forecast()
 
 # --------------------------------------------------
-# 3. Call Code APIs
+# CALL CODE APIs
 # --------------------------------------------------
+
 app.include_router(
     call_code.router,
     prefix="/api/call-code",
@@ -59,8 +80,22 @@ app.include_router(
 )
 
 # --------------------------------------------------
-# 4. Health check
+# SERVICE APIs
 # --------------------------------------------------
+
+app.include_router(
+    service_router,
+    prefix="/api/service",
+    tags=["Service"]
+)
+
+# --------------------------------------------------
+# HEALTH CHECK
+# --------------------------------------------------
+
 @app.get("/")
 def home():
-    return {"status": "API running 🚀"}
+
+    return {
+        "status": "API running 🚀"
+    }

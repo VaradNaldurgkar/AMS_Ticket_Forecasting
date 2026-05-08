@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import SummaryCard from "../components/SummaryCard";
 import CallCodePieChart from "../components/CallCodePieChart";
 import TopServiceRequestsChart from "../components/TopServiceRequestsChart";
@@ -6,82 +8,120 @@ import "../css/serviceDashboard.css";
 
 const ServiceDashboard = () => {
 
+  // ======================================================
+  // STATE
+  // ======================================================
+
+  const [dashboardData, setDashboardData] = useState(null);
+
+  const [loading, setLoading] = useState(true);
+
+  const [error, setError] = useState("");
+
+  // ======================================================
+  // API CALL
+  // ======================================================
+
+  useEffect(() => {
+
+    fetch("http://127.0.0.1:8000/api/service/service-breakdown")
+
+      .then((response) => response.json())
+
+      .then((data) => {
+
+        setDashboardData(data);
+
+        setLoading(false);
+      })
+
+      .catch((err) => {
+
+        console.error(err);
+
+        setError("Failed to load dashboard");
+
+        setLoading(false);
+      });
+
+  }, []);
+
+  // ======================================================
+  // LOADING UI
+  // ======================================================
+
+  if (loading) {
+
+    return (
+
+      <div className="service-dashboard">
+
+        <h2>Loading Dashboard...</h2>
+
+      </div>
+    );
+  }
+
+  // ======================================================
+  // ERROR UI
+  // ======================================================
+
+  if (error) {
+
+    return (
+
+      <div className="service-dashboard">
+
+        <h2>{error}</h2>
+
+      </div>
+    );
+  }
+
+  // ======================================================
+  // SUMMARY DATA
+  // ======================================================
+
   const summaryData = [
+
     {
       title: "Total Service Tickets",
-      value: "17,210",
+
+      value:
+        dashboardData.summary_cards.total_tickets.toLocaleString(),
+
       subtitle: "All generated tickets",
     },
 
     {
       title: "Most Generated Ticket",
-      value: "2,198",
-      subtitle: "IT Asset Requisition",
+
+      value:
+        dashboardData.summary_cards.top_ticket_count.toLocaleString(),
+
+      subtitle:
+        dashboardData.summary_cards.top_ticket.slice(0, 35),
     },
 
     {
       title: "Total Categories",
-      value: "24",
+
+      value:
+        dashboardData.summary_cards.total_categories.toLocaleString(),
+
       subtitle: "Service ticket categories",
     },
   ];
 
-  const pieData = [
-    {
-      name: "IT Asset",
-      tickets: 2198,
-    },
-
-    {
-      name: "Accounts",
-      tickets: 1060,
-    },
-
-    {
-      name: "MS Teams",
-      tickets: 649,
-    },
-
-    {
-      name: "Software",
-      tickets: 196,
-    },
-
-    {
-      name: "Hardware",
-      tickets: 126,
-    },
-  ];
-
-  const topRequestsData = [
-  {
-    name: "IT Asset",
-    tickets: 2198,
-  },
-
-  {
-    name: "Accounts",
-    tickets: 1060,
-  },
-
-  {
-    name: "MS Teams",
-    tickets: 649,
-  },
-
-  {
-    name: "Software",
-    tickets: 196,
-  },
-
-  {
-    name: "Hardware",
-    tickets: 126,
-  },
-];
+  // ======================================================
+  // FINAL UI
+  // ======================================================
 
   return (
+
     <div className="service-dashboard">
+
+      {/* HEADER */}
 
       <div className="dashboard-header">
 
@@ -92,6 +132,8 @@ const ServiceDashboard = () => {
         </p>
 
       </div>
+
+      {/* SUMMARY CARDS */}
 
       <div className="summary-grid">
 
@@ -108,13 +150,17 @@ const ServiceDashboard = () => {
 
       </div>
 
+      {/* CHART SECTION */}
+
       <div className="top-section">
 
-        <CallCodePieChart data={pieData} />
+        <CallCodePieChart
+          data={dashboardData.pie_chart_data}
+        />
 
         <TopServiceRequestsChart
-  data={topRequestsData}
-/>
+          data={dashboardData.bar_chart_data}
+        />
 
       </div>
 
