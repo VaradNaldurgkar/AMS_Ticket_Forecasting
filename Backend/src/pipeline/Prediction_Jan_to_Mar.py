@@ -44,6 +44,18 @@ def get_actual_vs_predicted():
     # -------------------------------
     train = monthly[monthly["Month"] < "2026-01-01"]
 
+    print("\nMonthly Data: \n")
+    print(monthly)
+
+    print("\nTrain Values:\n")
+    print(train["Total_Tickets"].tolist())
+
+    print("\nLocation Values:\n")
+    print(df["Location"].unique())
+
+    print("\nData Types:\n")
+    print(df.dtypes)
+
     # -------------------------------
     # ARIMA
     # -------------------------------
