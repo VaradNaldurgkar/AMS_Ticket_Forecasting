@@ -1,51 +1,76 @@
 .insight-card {
-  background: #fff7ed;
-  border: 1px solid #fdba74;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  padding: 18px 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s ease;
+}
+
+.insight-card:hover {
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
 }
 
 .insight-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #9a3412;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  color: #2563eb; /* info blue */
+}
+
+.insight-header .icon {
+  font-size: 16px;
 }
 
 .insight-title {
-  color: #c2410c;
   font-size: 18px;
-  margin-bottom: 8px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 12px;
 }
 
-.insight-values {
-  font-size: 14px;
+.insight-section {
   margin-bottom: 12px;
 }
 
 .insight-section h5 {
-  margin: 6px 0;
+  margin-bottom: 6px;
   font-size: 13px;
-  color: #78350f;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
 .insight-section p {
-  font-size: 13px;
-  margin-bottom: 10px;
+  font-size: 14px;
+  margin: 6px 0;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.insight-section p b {
+  color: #111827;
 }
 
 .insight-btn {
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   border: none;
-  border-radius: 8px;
-  background: #ea580c;
-  color: white;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
 }
 
 .insight-btn:hover {
-  background: #c2410c;
+  background: #1d4ed8;
+}
+
+.insight-btn:active {
+  transform: scale(0.98);
 }
