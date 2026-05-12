@@ -1,0 +1,54 @@
+.incident-dashboard {
+  padding: 28px 32px;
+  background: #f5f7f6;
+  min-height: 100vh;
+  font-family: "Segoe UI", "Inter", sans-serif;
+}
+.incident-dashboard__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.incident-dashboard__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+}
+.incident-dashboard__sub {
+  font-size: 15px;
+  color: #6b7280;
+  margin: 0;
+}
+.incident-dashboard__header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.incident-dashboard__live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1d9e75;
+  animation: pulse-dot 1.8s infinite;
+}
+.incident-dashboard__live-label {
+  font-size: 12px;
+  color: #0f6e56;
+  font-weight: 500;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+.incident-dashboard__row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+@media (max-width: 900px) {
+  .incident-dashboard { padding: 18px 16px; }
+  .incident-dashboard__row-2 { grid-template-columns: 1fr; }
+}

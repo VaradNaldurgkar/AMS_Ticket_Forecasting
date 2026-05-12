@@ -1,0 +1,53 @@
+.status-table-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e8f0ed;
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.status-table-card__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.status-table-card__title { font-size: 15px; font-weight: 600; color: #111827; margin: 0; }
+.status-table-card__count { font-size: 12px; color: #9ca3af; }
+
+/* Scrollable body — ~8 rows visible, rest accessible via scroll */
+.status-table-wrapper {
+  overflow-y: auto;
+  overflow-x: auto;
+  flex: 1 1 auto;
+  max-height: 420px;
+}
+.status-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.status-table thead th {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  z-index: 1;
+  text-align: left;
+  font-size: 12px; font-weight: 600;
+  color: #9ca3af; letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0 10px 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.status-table thead th.sortable { cursor: pointer; user-select: none; transition: color 0.15s; }
+.status-table thead th.sortable:hover { color: #1d9e75; }
+.status-table__row:hover { background: #f9fffe; }
+.status-table td { padding: 11px 10px 11px 0; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+.status-table__row:last-child td { border-bottom: none; }
+.status-table__name { color: #111827; font-weight: 500; white-space: nowrap; font-size: 14px; }
+.status-table__count { color: #374151; font-weight: 600; font-size: 14px; }
+.badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 4px 11px; border-radius: 20px; }
+.badge--open    { background: #dbeafe; color: #1e40af; }
+.badge--closed  { background: #d1fae5; color: #065f46; }
+.badge--pending { background: #fef3c7; color: #92400e; }
+.trend { font-size: 15px; font-weight: 700; }
+.trend--up      { color: #dc2626; }
+.trend--down    { color: #059669; }
+.trend--neutral { color: #9ca3af; }
+
+/* Subtle scrollbar */
+.status-table-wrapper::-webkit-scrollbar { width: 6px; height: 6px; }
+.status-table-wrapper::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+.status-table-wrapper::-webkit-scrollbar-thumb:hover { background: #9ca3af; }

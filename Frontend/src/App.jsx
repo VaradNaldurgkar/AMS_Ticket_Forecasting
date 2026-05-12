@@ -7,6 +7,8 @@ import CallCodeBifurcation from "./features/Call_code_page/pages/CallCodeBifurca
 
 import ServiceDashboard from "./features/service_request/Pages/ServiceDashboard";
 
+import IncidentDashboard from "./features/incident_request/pages/IncidentDashboard";
+
 function App() {
   return (
     <Layout>
@@ -29,7 +31,7 @@ function App() {
 
         <Route
           path="/incident"
-          element={<h2>Incident Page</h2>}
+          element={<IncidentDashboard />}
         />
 
         <Route

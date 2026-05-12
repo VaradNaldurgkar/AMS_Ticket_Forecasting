@@ -25,6 +25,8 @@ from api.routes.service import (
 
 from api.routes import call_code
 
+from api.routes import incident
+
 # --------------------------------------------------
 # IMPORT PIPELINES
 # --------------------------------------------------
@@ -87,6 +89,16 @@ app.include_router(
     service_router,
     prefix="/api/service",
     tags=["Service"]
+)
+
+# --------------------------------------------------
+# INCIDENT APIs
+# --------------------------------------------------
+
+app.include_router(
+    incident.router,
+    prefix="/api/incident",
+    tags=["Incident"]
 )
 
 # --------------------------------------------------

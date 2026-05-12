@@ -1,0 +1,25 @@
+.line-chart-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e8f0ed;
+  padding: 20px;
+  height: 100%;
+}
+.line-chart-card__header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px; gap: 12px; flex-wrap: wrap;
+}
+.line-chart-card__title { font-size: 14px; font-weight: 600; color: #111827; margin: 0 0 2px; }
+.line-chart-card__sub { font-size: 11px; color: #9ca3af; margin: 0; }
+.line-chart-card__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+.chip--up { background: #fee2e2; color: #991b1b; }
+.chip--dn  { background: #d1fae5; color: #065f46; }
+.line-tooltip {
+  background: #ffffff; border: 1px solid #e8f0ed;
+  border-radius: 8px; padding: 8px 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.line-tooltip__week { font-size: 11px; color: #9ca3af; margin: 0 0 2px; }
+.line-tooltip__val  { font-size: 13px; font-weight: 700; color: #1d9e75; margin: 0; }
