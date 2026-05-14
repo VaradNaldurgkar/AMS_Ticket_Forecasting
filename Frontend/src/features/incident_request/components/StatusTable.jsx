@@ -1,85 +1,185 @@
 import React, { useState } from "react";
+
 import "../css/StatusTable.css";
 
-const incidents = [
-  { name: "Laptop", count: 441, status: "Open", trend: "up" },
-  { name: "VPN", count: 352, status: "Closed", trend: "up" },
-  { name: "Citrix", count: 270, status: "Pending", trend: "down" },
-  { name: "Headset", count: 236, status: "Closed", trend: "neutral" },
-  { name: "Laptop Issue", count: 203, status: "Open", trend: "up" },
-  { name: "Access Issue", count: 170, status: "Pending", trend: "up" },
-  { name: "MS Teams", count: 146, status: "Closed", trend: "down" },
-  { name: "Any Application", count: 144, status: "Open", trend: "neutral" },
-  { name: "Citrix Issue", count: 127, status: "Pending", trend: "up" },
-  { name: "Internet", count: 117, status: "Closed", trend: "down" },
-  { name: "Headset Issue", count: 115, status: "Open", trend: "neutral" },
-  { name: "VPN Issue", count: 107, status: "Pending", trend: "up" },
-  { name: "Wi-Fi", count: 92, status: "Closed", trend: "down" },
-  { name: "Mouse", count: 81, status: "Open", trend: "neutral" },
-  { name: "Outlook", count: 71, status: "Pending", trend: "up" },
-];
+const StatusTable = ({ data }) => {
 
-const STATUS_META = {
-  Open:    { cls: "badge--open",    label: "Open" },
-  Closed:  { cls: "badge--closed",  label: "Closed" },
-  Pending: { cls: "badge--pending", label: "Pending" },
-};
+  const [sortKey, setSortKey] = useState("incident_count");
 
-const TREND_META = {
-  up:      { icon: "↑", cls: "trend--up" },
-  down:    { icon: "↓", cls: "trend--down" },
-  neutral: { icon: "—", cls: "trend--neutral" },
-};
-
-const StatusTable = () => {
-  const [sortKey, setSortKey] = useState("count");
   const [sortDir, setSortDir] = useState("desc");
 
-  const sorted = [...incidents].sort((a, b) => {
-    if (sortKey === "count") return sortDir === "desc" ? b.count - a.count : a.count - b.count;
-    if (sortKey === "name")  return sortDir === "desc" ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name);
+  if (!data) return null;
+
+  // ====================================================
+  // SORTING
+  // ====================================================
+
+  const sorted = [...data].sort((a, b) => {
+
+    if (sortKey === "incident_count") {
+
+      return sortDir === "desc"
+
+        ? b.incident_count - a.incident_count
+
+        : a.incident_count - b.incident_count;
+    }
+
+    if (sortKey === "incident_type") {
+
+      return sortDir === "desc"
+
+        ? b.incident_type.localeCompare(a.incident_type)
+
+        : a.incident_type.localeCompare(b.incident_type);
+    }
+
     return 0;
   });
 
+  // ====================================================
+  // TOGGLE SORT
+  // ====================================================
+
   const toggleSort = (key) => {
-    if (sortKey === key) setSortDir(d => d === "desc" ? "asc" : "desc");
-    else { setSortKey(key); setSortDir("desc"); }
+
+    if (sortKey === key) {
+
+      setSortDir((d) =>
+        d === "desc" ? "asc" : "desc"
+      );
+
+    } else {
+
+      setSortKey(key);
+
+      setSortDir("desc");
+    }
   };
 
-  const chevron = (key) => sortKey === key ? (sortDir === "desc" ? " ↓" : " ↑") : "";
+  const chevron = (key) =>
+
+    sortKey === key
+
+      ? sortDir === "desc"
+
+        ? " ↓"
+
+        : " ↑"
+
+      : "";
+
+  // ====================================================
+  // JSX
+  // ====================================================
 
   return (
+
     <div className="status-table-card">
+
       <div className="status-table-card__header">
-        <h3 className="status-table-card__title">Status Breakdown</h3>
-        <span className="status-table-card__count">{incidents.length} types</span>
+
+        <h3 className="status-table-card__title">
+
+          Resolution Metrics
+
+        </h3>
+
+        <span className="status-table-card__count">
+
+          {data.length} types
+
+        </span>
+
       </div>
+
       <div className="status-table-wrapper">
+
         <table className="status-table">
+
           <thead>
+
             <tr>
-              <th className="sortable" onClick={() => toggleSort("name")}>Incident Type{chevron("name")}</th>
-              <th className="sortable" onClick={() => toggleSort("count")}>Tickets{chevron("count")}</th>
-              <th>Status</th>
-              <th>Trend</th>
+
+              <th
+                className="sortable"
+                onClick={() =>
+                  toggleSort("incident_type")
+                }
+              >
+
+                Incident Type
+                {chevron("incident_type")}
+
+              </th>
+
+              <th
+                className="sortable"
+                onClick={() =>
+                  toggleSort("incident_count")
+                }
+              >
+
+                Tickets
+                {chevron("incident_count")}
+
+              </th>
+
+              <th>
+                Avg Resolution
+              </th>
+
+              <th>
+                Median Resolution
+              </th>
+
             </tr>
+
           </thead>
+
           <tbody>
-            {sorted.map((row, i) => {
-              const s = STATUS_META[row.status];
-              const t = TREND_META[row.trend];
-              return (
-                <tr key={i} className="status-table__row">
-                  <td className="status-table__name">{row.name}</td>
-                  <td className="status-table__count">{row.count}</td>
-                  <td><span className={`badge ${s.cls}`}>{s.label}</span></td>
-                  <td><span className={`trend ${t.cls}`}>{t.icon}</span></td>
-                </tr>
-              );
-            })}
+
+            {sorted.map((row, i) => (
+
+              <tr
+                key={i}
+                className="status-table__row"
+              >
+
+                <td className="status-table__name">
+
+                  {row.incident_type}
+
+                </td>
+
+                <td className="status-table__count">
+
+                  {row.incident_count}
+
+                </td>
+
+                <td>
+
+                  {row.avg_resolution_hours} hrs
+
+                </td>
+
+                <td>
+
+                  {row.median_resolution_hours} hrs
+
+                </td>
+
+              </tr>
+
+            ))}
+
           </tbody>
+
         </table>
+
       </div>
+
     </div>
   );
 };

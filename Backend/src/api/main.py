@@ -27,6 +27,8 @@ from api.routes import call_code
 
 from api.routes import incident
 
+from api.routes import incident_dashboard
+
 # --------------------------------------------------
 # IMPORT PIPELINES
 # --------------------------------------------------
@@ -99,6 +101,16 @@ app.include_router(
     incident.router,
     prefix="/api/incident",
     tags=["Incident"]
+)
+
+# --------------------------------------------------
+# INCIDENT DASHBOARD APIs
+# --------------------------------------------------
+
+app.include_router(
+    incident_dashboard.router,
+    prefix="/api/incident-dashboard",
+    tags=["Incident Dashboard"]
 )
 
 # --------------------------------------------------
