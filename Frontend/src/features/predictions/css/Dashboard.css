@@ -1,73 +1,147 @@
-/* DASHBOARD BASE */
+/* =======================================================
+   DASHBOARD BASE
+======================================================= */
+
 .dashboard {
-  padding: 24px;
+  padding: 18px;
   background: #f5f7fa;
   min-height: 100vh;
   font-family: "Inter", Arial, sans-serif;
 }
 
-/* KPI ROW */
+/* =======================================================
+   KPI ROW
+======================================================= */
+
 .kpi-row {
+
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 20px;
-  margin-bottom: 24px;
+
+  /* 4 CARDS PERFECTLY SIDE BY SIDE */
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 12px;
+
+  margin-bottom: 20px;
+
+  align-items: stretch;
 }
 
-/* KPI CARD */
+/* =======================================================
+   KPI CARD
+======================================================= */
+
 .kpi-card {
+
   background: #ffffff;
-  padding: 18px;
+
+  padding: 12px;
+
   border-radius: 14px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.05);
+
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: 0.2s ease;
-  height: 200px;
+
+  transition: all 0.2s ease;
+
+  /* SMALLER HEIGHT */
+  min-height: 150px;
+
+  width: 100%;
+
+  overflow: hidden;
 }
 
 .kpi-card:hover {
-  transform: translateY(-4px);
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 6px 14px rgba(0,0,0,0.08);
 }
 
-/* HEADER */
+/* =======================================================
+   HEADER
+======================================================= */
+
 .kpi-header {
+
   font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
+
+  font-weight: 700;
+
+  color: #374151;
 }
 
-/* BODY */
+/* =======================================================
+   BODY
+======================================================= */
+
 .kpi-body {
-  margin-top: 10px;
+
+  margin-top: 6px;
 }
 
-/* ACTUAL + PREDICTED */
+/* =======================================================
+   ACTUAL + PREDICTED
+======================================================= */
+
 .kpi-main {
+
   display: flex;
+
   justify-content: space-between;
+
+  align-items: flex-start;
+
   margin-bottom: 8px;
 }
 
-/* LABEL */
+/* =======================================================
+   LABEL
+======================================================= */
+
 .kpi-label {
+
   display: block;
-  font-size: 12px;
+
+  font-size: 10px;
+
   color: #9ca3af;
+
+  margin-bottom: 2px;
 }
 
-/* VALUE */
+/* =======================================================
+   VALUE
+======================================================= */
+
 .kpi-value {
-  font-size: 22px;
-  font-weight: 600;
-  color: #111827;
+
+  font-size: 20px;
+
+  font-weight: 800;
+
+  color: #0f172a;
+
+  line-height: 1;
 }
 
-/* DEVIATION */
+/* =======================================================
+   DEVIATION
+======================================================= */
+
 .kpi-deviation {
-  font-weight: bold;
-  font-size: 14px;
+
+  font-weight: 700;
+
+  font-size: 12px;
+
+  margin-top: 2px;
 }
 
 .kpi-deviation.green {
@@ -78,19 +152,54 @@
   color: #dc2626;
 }
 
-/* SPARKLINE */
+/* =======================================================
+   SPARKLINE
+======================================================= */
+
 .kpi-sparkline {
-  margin-top: 6px;
+
+  margin-top: 2px;
 }
 
-/* FOOTER */
+/* =======================================================
+   FOOTER
+======================================================= */
+
 .kpi-footer {
-  font-size: 13px;
+
+  font-size: 11px;
+
   color: #6b7280;
-  margin-top: 8px;
+
+  margin-top: 4px;
+
+  font-weight: 500;
 }
 
-/* ===== INSIGHT CARD ===== */
+/* =======================================================
+   INSIGHT CARD
+======================================================= */
+
+.insight-card {
+
+  background: #ffffff;
+
+  border-radius: 16px;
+
+  padding: 18px;
+
+  box-shadow:
+    0 4px 14px rgba(0,0,0,0.05);
+
+  width: 340px;
+
+  margin-bottom: 24px;
+}
+
+/* =======================================================
+   ANOMALY
+======================================================= */
+
 .anomaly {
   background: #fff7ed;
   border: 1px solid #fdba74;
@@ -107,111 +216,204 @@
   color: #78350f;
 }
 
-/* ===== CHART ===== */
+/* =======================================================
+   CHART
+======================================================= */
+
 .chart-container {
+
   background: white;
+
   padding: 22px;
-  border-radius: 14px;
+
+  border-radius: 18px;
+
   margin-bottom: 24px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+
+  box-shadow:
+    0 4px 14px rgba(0,0,0,0.05);
 }
 
-/* ===== FORECAST (NEW CLEAN VERSION) ===== */
+.chart-container h3 {
+
+  font-size: 20px;
+
+  margin-bottom: 18px;
+
+  font-weight: 700;
+}
+
+/* =======================================================
+   FORECAST CARD
+======================================================= */
+
 .forecast-card {
+
   background: white;
+
   padding: 22px;
-  border-radius: 14px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 4px 14px rgba(0,0,0,0.05);
+
   margin-top: 24px;
 }
 
-/* HEADER */
+/* =======================================================
+   FORECAST HEADER
+======================================================= */
+
 .forecast-header {
+
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
   margin-bottom: 18px;
 }
 
 .forecast-header h3 {
+
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
+
+  font-size: 20px;
+
+  font-weight: 700;
 }
 
 .forecast-sub {
+
   font-size: 13px;
+
   color: #6b7280;
 }
 
-/* COLUMN HEADERS */
-.forecast-columns {
-  display: grid;
-  grid-template-columns: 120px 160px 120px 60px;
-  gap: 20px;
-  font-size: 12px;
-  color: #6b7280;
-}
+/* =======================================================
+   FORECAST ROW
+======================================================= */
 
-/* ROW */
 .forecast-row-new {
+
   display: grid;
-  grid-template-columns: 80px 1fr 120px 160px 120px 60px;
+
+  grid-template-columns:
+    90px
+    1fr
+    100px
+    140px
+    90px
+    30px;
+
   align-items: center;
-  gap: 20px;
+
+  gap: 14px;
+
   margin-bottom: 16px;
 }
 
-/* MONTH */
+/* =======================================================
+   MONTH
+======================================================= */
+
 .forecast-month {
-  font-weight: 500;
+
+  font-weight: 600;
+
+  font-size: 14px;
+
   color: #374151;
 }
 
-/* BAR */
+/* =======================================================
+   BAR
+======================================================= */
+
 .forecast-bar-wrapper {
   width: 100%;
 }
 
 .forecast-bar-bg {
+
   width: 100%;
-  height: 10px;
+
+  height: 8px;
+
   background: #e5e7eb;
+
   border-radius: 999px;
+
   overflow: hidden;
 }
 
 .forecast-bar-fill {
+
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+
+  background:
+    linear-gradient(
+      90deg,
+      #2563eb,
+      #60a5fa
+    );
+
   border-radius: 999px;
+
   transition: width 0.4s ease;
 }
 
-/* VALUE */
+/* =======================================================
+   VALUE
+======================================================= */
+
 .forecast-value {
-  font-weight: 600;
+
+  font-weight: 700;
+
+  font-size: 14px;
+
   color: #111827;
 }
 
-/* RANGE */
+/* =======================================================
+   RANGE
+======================================================= */
+
 .forecast-range {
-  font-size: 13px;
+
+  font-size: 12px;
+
   color: #6b7280;
 }
 
-/* CHANGE */
+/* =======================================================
+   CHANGE
+======================================================= */
+
 .forecast-change.green {
+
   color: #16a34a;
+
+  font-size: 12px;
+
+  font-weight: 600;
 }
 
 .forecast-change.red {
   color: #dc2626;
 }
 
-/* TREND */
+/* =======================================================
+   TREND
+======================================================= */
+
 .forecast-trend {
-  font-size: 16px;
+
+  font-size: 15px;
+
   font-weight: bold;
 }
 
@@ -223,78 +425,182 @@
   color: #dc2626;
 }
 
-/* NOTE */
+/* =======================================================
+   NOTE
+======================================================= */
+
 .forecast-note {
-  margin-top: 16px;
-  font-size: 12px;
+
+  margin-top: 14px;
+
+  font-size: 11px;
+
   color: #6b7280;
 }
 
-/* ===== ANALYTICS GRID ===== */
+/* =======================================================
+   ANALYTICS GRID
+======================================================= */
+
 .analytics-grid {
+
   display: grid;
+
   grid-template-columns: 3fr 1fr;
-  gap: 20px;
+
+  gap: 18px;
+
   align-items: stretch;
 }
 
-/* RIGHT PANEL */
+/* =======================================================
+   RIGHT PANEL
+======================================================= */
+
 .right-panel {
+
   display: flex;
+
   flex-direction: column;
+
   gap: 16px;
 }
 
-/* KEY CHANGES */
+/* =======================================================
+   KEY CHANGES
+======================================================= */
+
 .changes-card {
+
   background: white;
+
   padding: 16px;
-  border-radius: 14px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 4px 14px rgba(0,0,0,0.05);
 }
 
 .changes-card h4 {
+
   margin: 0 0 12px 0;
-  font-size: 15px;
-  font-weight: 600;
+
+  font-size: 16px;
+
+  font-weight: 700;
+
   color: #111827;
 }
 
 .change-item {
+
   display: flex;
+
   align-items: center;
+
   gap: 8px;
+
   font-size: 13px;
+
   margin-bottom: 10px;
+
   color: #374151;
 }
 
-/* DOTS */
+/* =======================================================
+   DOTS
+======================================================= */
+
 .change-dot {
+
   width: 8px;
   height: 8px;
   border-radius: 50%;
 }
 
-.change-dot.green { background: #16a34a; }
-.change-dot.blue { background: #2563eb; }
-.change-dot.orange { background: #f59e0b; }
+.change-dot.green {
+  background: #16a34a;
+}
 
-/* BUTTON */
+.change-dot.blue {
+  background: #2563eb;
+}
+
+.change-dot.orange {
+  background: #f59e0b;
+}
+
+/* =======================================================
+   BUTTON
+======================================================= */
+
 .report-btn {
+
   margin-top: 12px;
+
   width: 100%;
-  padding: 9px;
+
+  padding: 10px;
+
   border: none;
+
   border-radius: 10px;
-  background: #10b981;
+
+  background: #2563eb;
+
   color: white;
+
   font-size: 13px;
-  font-weight: 500;
+
+  font-weight: 600;
+
   cursor: pointer;
+
   transition: 0.2s ease;
 }
 
 .report-btn:hover {
-  background: #059669;
+  background: #1d4ed8;
+}
+
+/* =======================================================
+   RESPONSIVE
+======================================================= */
+
+@media (max-width: 1100px) {
+
+  .kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .insight-card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .kpi-row {
+    grid-template-columns: 1fr;
+  }
+
+  .forecast-row-new {
+
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+  }
+
+  .kpi-value {
+    font-size: 20px;
+  }
+
+  .forecast-value {
+    font-size: 16px;
+  }
 }

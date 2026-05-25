@@ -3,16 +3,20 @@ import "../css/Dashboard.css";
 import PredictionChart from "../components/charts/PredictionChart";
 
 // Recharts
-import { LineChart, Line, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+} from "recharts";
 
 // Existing UI components
 import HealthSummary from "../components/Summary/HealthSummary";
 import InsightCard from "../components/Insight/InsightCard";
 import ErrorAnalysis from "../components/Analytics/ErrorAnalysis";
 
-// 🔥 API SERVICE
+// API SERVICES
 import {
-  getActualVsPredicted,
+  getForecastEvaluation,
   getFutureForecast,
 } from "../services/predictionService";
 
@@ -20,43 +24,119 @@ const PredictionDashboard = () => {
 
   const [chartData, setChartData] = useState([]);
   const [forecastData, setForecastData] = useState([]);
-  const [kpis, setKpis] = useState(null);
+  const [kpis, setKpis] = useState({
+    accuracy: 95.78,
+    mape: 4.22,
+  });
+
+  // ====================================================
+  // FETCH DATA
+  // ====================================================
 
   useEffect(() => {
+
     const fetchData = async () => {
-      const past = await getActualVsPredicted();
-      const future = await getFutureForecast();
 
-      if (past) {
-        setChartData(past.data);
-        setKpis(past.kpis);
+      try {
+
+        // ================================================
+        // HISTORICAL EVALUATION
+        // ================================================
+
+        const past = await getForecastEvaluation();
+
+        // ================================================
+        // FUTURE FORECAST
+        // ================================================
+
+        const future = await getFutureForecast();
+
+        // ================================================
+        // SET HISTORICAL DATA
+        // ================================================
+
+        if (past && past.data) {
+
+          setChartData(past.data);
+
+          // ==============================================
+          // CALCULATE KPIs
+          // ==============================================
+
+          const avgError =
+            past.data.reduce(
+              (sum, item) =>
+                sum + item.error_percentage,
+              0
+            ) / past.data.length;
+
+          const accuracy = (
+            100 - avgError
+          ).toFixed(2);
+
+          setKpis({
+            accuracy,
+            mape: avgError.toFixed(2),
+          });
+        }
+
+        // ================================================
+        // SET FUTURE FORECAST
+        // ================================================
+
+        if (future) {
+          setForecastData(future);
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Dashboard Error:",
+          error
+        );
       }
-
-      setForecastData(future);
     };
 
     fetchData();
+
   }, []);
 
-  if (!kpis) {
-    return <div className="dashboard">Loading...</div>;
+  // ====================================================
+  // LOADING
+  // ====================================================
+
+  if (!chartData.length) {
+
+    return (
+      <div className="dashboard">
+        Loading...
+      </div>
+    );
   }
 
-  // KPI cards → Jan–Mar
-  const kpiData = chartData.slice(0, 3);
-
   return (
+
     <div className="dashboard">
 
       {/* HEALTH SUMMARY */}
       <HealthSummary />
 
-      {/* KPI ROW */}
-      <div className="kpi-row">
-        {kpiData.map((item, index) => {
+      {/* ================================================= */}
+      {/* KPI CARDS */}
+      {/* ================================================= */}
 
-          const error = Math.abs(item.actual - item.predicted);
-          const deviation = ((error / item.actual) * 100).toFixed(1);
+      <div className="kpi-row">
+
+        {chartData.map((item, index) => {
+
+          const error = Math.abs(
+            item.actual - item.predicted
+          );
+
+          const deviation = (
+            (error / item.actual) * 100
+          ).toFixed(1);
+
           const isHigh = deviation > 2;
 
           const trendData = [
@@ -68,73 +148,131 @@ const PredictionDashboard = () => {
           ];
 
           return (
-            <div className="kpi-card month-card" key={index}>
-              <div className="kpi-header">{item.month}</div>
 
+            <div
+              className="kpi-card month-card"
+              key={index}
+            >
+
+              {/* HEADER */}
+              <div className="kpi-header">
+                {item.month}
+              </div>
+
+              {/* BODY */}
               <div className="kpi-body">
 
+                {/* ACTUAL + PREDICTED */}
                 <div className="kpi-main">
-                  <div>
-                    <span className="kpi-label">Actual</span>
-                    <span className="kpi-value">{item.actual}</span>
-                  </div>
 
                   <div>
-                    <span className="kpi-label">Predicted</span>
-                    <span className="kpi-value">{item.predicted}</span>
+                    <span className="kpi-label">
+                      Actual
+                    </span>
+
+                    <span className="kpi-value">
+                      {item.actual}
+                    </span>
                   </div>
+
+                  <div style={{ textAlign: "right" }}>
+                    <span className="kpi-label">
+                      Predicted
+                    </span>
+
+                    <span className="kpi-value">
+                      {item.predicted}
+                    </span>
+                  </div>
+
                 </div>
 
-                <div className={`kpi-deviation ${isHigh ? "red" : "green"}`}>
+                {/* DEVIATION */}
+                <div
+                  className={`kpi-deviation ${
+                    isHigh ? "red" : "green"
+                  }`}
+                >
                   {isHigh ? "↓" : "↑"} {deviation}%
                 </div>
 
+                {/* SPARKLINE */}
                 <div className="kpi-sparkline">
-                  <ResponsiveContainer width="100%" height={60}>
+
+                  <ResponsiveContainer
+                    width="100%"
+                    height={60}
+                  >
+
                     <LineChart data={trendData}>
+
                       <Line
                         type="monotone"
                         dataKey="v"
-                        stroke={isHigh ? "#dc2626" : "#16a34a"}
-                        strokeWidth={2}
+                        stroke={
+                          isHigh
+                            ? "#dc2626"
+                            : "#16a34a"
+                        }
+                        strokeWidth={2.5}
                         dot={false}
                       />
+
                     </LineChart>
+
                   </ResponsiveContainer>
+
                 </div>
 
               </div>
 
+              {/* FOOTER */}
               <div className="kpi-footer">
                 Error: {error.toFixed(0)} tickets
               </div>
+
             </div>
           );
         })}
 
-        <InsightCard />
       </div>
 
+      {/* ================================================= */}
       {/* MAIN ANALYTICS GRID */}
+      {/* ================================================= */}
+
       <div className="analytics-grid">
 
-        {/* LEFT: CHART */}
+        {/* LEFT CHART */}
         <div className="chart-container">
-          <h3>Actual vs Predicted Tickets</h3>
+
+          <h3>
+            Actual vs Predicted Tickets
+          </h3>
+
           <PredictionChart data={chartData} />
+
         </div>
 
         {/* RIGHT PANEL */}
         <div className="right-panel">
 
+          {/* WORKFORCE INSIGHT CARD */}
+          <InsightCard />
+
+          {/* ERROR ANALYSIS */}
           <ErrorAnalysis data={chartData} />
 
+          {/* KEY CHANGES */}
           <div className="changes-card">
-            <h4>Key Changes This Month</h4>
+
+            <h4>
+              Key Changes This Month
+            </h4>
 
             <div className="change-item">
               <span className="change-dot green"></span>
-              Ticket trends adjusted based on latest model output.
+              Historical forecast evaluation stabilized.
             </div>
 
             <div className="change-item">
@@ -150,39 +288,64 @@ const PredictionDashboard = () => {
             <button className="report-btn">
               View Detailed Report →
             </button>
+
           </div>
 
         </div>
 
       </div>
 
-      {/* ===== FORECAST (LIVE DATA) ===== */}
+      {/* ================================================= */}
+      {/* FUTURE FORECAST */}
+      {/* ================================================= */}
+
       <div className="forecast-card">
 
         <div className="forecast-header">
+
           <div>
-            <h3>Future Forecast</h3>
-            <span className="forecast-sub">Next 3 Months</span>
+
+            <h3>
+              Future Forecast
+            </h3>
+
+            <span className="forecast-sub">
+              Next 3 Months
+            </span>
+
           </div>
+
         </div>
 
         {forecastData.map((item, index) => {
 
-          const width = (item.predicted / 3000) * 100; // normalize
-          const isPositive = true;
+          const width =
+            (item.predicted / 3000) * 100;
 
           return (
-            <div className="forecast-row-new" key={index}>
 
-              <div className="forecast-month">{item.month}</div>
+            <div
+              className="forecast-row-new"
+              key={index}
+            >
+
+              <div className="forecast-month">
+                {item.month}
+              </div>
 
               <div className="forecast-bar-wrapper">
+
                 <div className="forecast-bar-bg">
+
                   <div
                     className="forecast-bar-fill"
-                    style={{ width: `${width}%` }}
+                    style={{
+                      width: `${width}%`
+                    }}
                   ></div>
+
                 </div>
+
               </div>
 
               <div className="forecast-value">
@@ -190,7 +353,11 @@ const PredictionDashboard = () => {
               </div>
 
               <div className="forecast-range">
-                {(item.predicted * 0.95).toFixed(0)} – {(item.predicted * 1.05).toFixed(0)}
+
+                {(item.predicted * 0.95).toFixed(0)}
+                {" – "}
+                {(item.predicted * 1.05).toFixed(0)}
+
               </div>
 
               <div className="forecast-change green">

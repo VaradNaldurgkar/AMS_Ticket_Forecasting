@@ -1,35 +1,78 @@
-// src/services/predictionService.js
+import axios from "axios";
 
-const BASE_URL = "http://127.0.0.1:8000/api/prediction";
+const BASE_URL = "http://127.0.0.1:8000";
 
-// 🔹 Get Actual vs Predicted (Jan–Apr + KPIs)
+// =====================================================
+// ACTUAL VS PREDICTED
+// =====================================================
+
 export const getActualVsPredicted = async () => {
+
   try {
-    const res = await fetch(`${BASE_URL}/actual-vs-predicted`);
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch actual vs predicted data");
-    }
+    const response = await axios.get(
+      `${BASE_URL}/api/prediction/actual-vs-predicted`
+    );
 
-    return await res.json();
+    return response.data;
+
   } catch (error) {
-    console.error("API Error:", error);
+
+    console.error(
+      "Actual vs Predicted API Error:",
+      error
+    );
+
     return null;
   }
 };
 
-// 🔹 Get Future Forecast (May–Oct)
+// =====================================================
+// FUTURE FORECAST
+// =====================================================
+
 export const getFutureForecast = async () => {
+
   try {
-    const res = await fetch(`${BASE_URL}/future`);
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch future forecast");
-    }
+    const response = await axios.get(
+      `${BASE_URL}/api/prediction/future`
+    );
 
-    return await res.json();
+    return response.data;
+
   } catch (error) {
-    console.error("API Error:", error);
+
+    console.error(
+      "Future Forecast API Error:",
+      error
+    );
+
     return [];
+  }
+};
+
+// =====================================================
+// FORECAST EVALUATION
+// =====================================================
+
+export const getForecastEvaluation = async () => {
+
+  try {
+
+    const response = await axios.get(
+      `${BASE_URL}/api/prediction/evaluation`
+    );
+
+    return response.data;
+
+  } catch (error) {
+
+    console.error(
+      "Forecast Evaluation API Error:",
+      error
+    );
+
+    return null;
   }
 };

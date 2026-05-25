@@ -29,6 +29,8 @@ from api.routes import incident
 
 from api.routes import incident_dashboard
 
+from api.routes import forecast_evaluation
+
 # --------------------------------------------------
 # IMPORT PIPELINES
 # --------------------------------------------------
@@ -72,6 +74,16 @@ def actual_vs_predicted():
 def future_forecast():
 
     return get_future_forecast()
+
+# --------------------------------------------------
+# FORECAST EVALUATION APIs
+# --------------------------------------------------
+
+app.include_router(
+    forecast_evaluation.router,
+    prefix="/api/prediction/evaluation",
+    tags=["Forecast Evaluation"]
+)
 
 # --------------------------------------------------
 # CALL CODE APIs

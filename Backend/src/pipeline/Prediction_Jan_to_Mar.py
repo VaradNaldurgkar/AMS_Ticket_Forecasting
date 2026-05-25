@@ -160,7 +160,7 @@ def get_actual_vs_predicted():
             )
         })
 
-    eval_df = result_df.iloc[:3].dropna()
+    eval_df = result_df.dropna()
 
     mape = mean_absolute_percentage_error(
         eval_df["Total_Tickets"],
