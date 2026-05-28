@@ -1,0 +1,22 @@
+category,priority,avg_resolution_time,ticket_count,total_effort_min,distribution_percentage
+Software / Installation,4,147.38,451,66468.38,35.34
+Others,4,106.65,226,24102.9,17.71
+Access / Login / Password,4,89.71,208,18659.68,16.3
+Hardware Issues,6,90.6,84,7610.4,6.58
+Network / VPN,4,138.2,72,9950.4,5.64
+Collaboration Tools,4,80.6,71,5722.6,5.56
+Hardware Issues,4,103.42,47,4860.74,3.68
+Citrix / VDI,4,103.34,35,3616.9,2.74
+PKI / Certificate,4,93.48,33,3084.84,2.59
+Others,6,43.42,22,955.24,1.72
+HR Systems,4,66.93,12,803.16,0.94
+Others,5,14.04,3,42.12,0.24
+Access / Login / Password,6,95.02,2,190.04,0.16
+Collaboration Tools,6,25.06,2,50.12,0.16
+Others,3,248.51,2,497.02,0.16
+Access / Login / Password,3,32.35,1,32.35,0.08
+HR Systems,5,5.1,1,5.1,0.08
+Network / VPN,5,1.23,1,1.23,0.08
+Hardware Issues,5,10.77,1,10.77,0.08
+Network / VPN,6,9.73,1,9.73,0.08
+Performance Issues,4,24.43,1,24.43,0.08

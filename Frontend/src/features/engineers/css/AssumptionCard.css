@@ -1,0 +1,39 @@
+.assumption-card h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 26px;
+  color: #111827;
+}
+
+.assumption-item {
+  margin-bottom: 26px;
+}
+
+.assumption-item h4 {
+  font-size: 16px;
+  color: #111827;
+  margin-bottom: 10px;
+}
+
+.assumption-item p {
+  color: #4b5563;
+  font-size: 15px;
+}
+
+.formula-box {
+  background: #e8f8ef;
+  padding: 18px;
+  border-radius: 14px;
+  color: #065f46;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.warning-box {
+  background: #fff7e8;
+  padding: 18px;
+  border-radius: 14px;
+  color: #b45309;
+  font-size: 14px;
+  line-height: 1.6;
+}

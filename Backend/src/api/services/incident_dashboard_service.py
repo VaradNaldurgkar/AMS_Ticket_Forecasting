@@ -29,6 +29,16 @@ def load_incident_dashboard_data():
     df = pd.read_csv(CSV_PATH)
 
     # ====================================================
+    # REMOVE GENERAL / UNCATEGORIZED
+    # FROM TOP CARDS + CHARTS ONLY
+    # ====================================================
+
+    filtered_df = df[
+        df["Incident_Type"] !=
+        "General / Uncategorized"
+    ].copy()
+
+    # ====================================================
     # SUMMARY CARDS
     # ====================================================
 
@@ -36,7 +46,7 @@ def load_incident_dashboard_data():
         df["Incident_Count"].sum()
     )
 
-    top_row = df.iloc[0]
+    top_row = filtered_df.iloc[0]
 
     top_incident = top_row["Incident_Type"]
 
@@ -44,13 +54,13 @@ def load_incident_dashboard_data():
         top_row["Incident_Count"]
     )
 
-    total_categories = int(len(df))
+    total_categories = int(len(filtered_df))
 
     # ====================================================
     # CHART DATA (TOP 5)
     # ====================================================
 
-    top_5 = df.head(5)
+    top_5 = filtered_df.head(5)
 
     chart_data = []
 

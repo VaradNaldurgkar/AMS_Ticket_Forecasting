@@ -1,0 +1,62 @@
+.fte-table h2 {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.fte-table p {
+  margin-top: 8px;
+  margin-bottom: 28px;
+  color: #6b7280;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #f9fafb;
+}
+
+th {
+  padding: 18px;
+  text-align: left;
+  color: #374151;
+  font-size: 14px;
+}
+
+td {
+  padding: 18px;
+  border-top: 1px solid #edf0f5;
+}
+
+.utilization-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-bar {
+  width: 120px;
+  height: 8px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #10b981;
+}
+
+.fte-table {
+  height: fit-content;
+}
+
+.fte-table table {
+  margin-bottom: 0;
+}
+
+.fte-table tbody tr:last-child td {
+  padding-bottom: 8px;
+}

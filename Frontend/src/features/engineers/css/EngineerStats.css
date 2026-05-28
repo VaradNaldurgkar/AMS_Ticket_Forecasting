@@ -1,0 +1,185 @@
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 22px;
+}
+
+/* ======================================================
+   CARD
+====================================================== */
+
+.stat-card {
+  background: white;
+
+  border-radius: 22px;
+
+  padding: 26px;
+
+  border: 1px solid #edf0f5;
+
+  box-shadow:
+    0 4px 12px rgba(0,0,0,0.04);
+
+  min-height: 210px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 10px 24px rgba(15,23,42,0.08);
+}
+
+/* ======================================================
+   ICON
+====================================================== */
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+
+  border-radius: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 22px;
+
+  font-size: 22px;
+}
+
+.stat-icon.blue {
+  background: #e8f0ff;
+  color: #2563eb;
+}
+
+.stat-icon.green {
+  background: #e8fff5;
+  color: #10b981;
+}
+
+.stat-icon.purple {
+  background: #f3e8ff;
+  color: #9333ea;
+}
+
+.stat-icon.orange {
+  background: #fff4e5;
+  color: #f59e0b;
+}
+
+.stat-icon.pink {
+  background: #ffe8ef;
+  color: #ec4899;
+}
+
+/* ======================================================
+   TITLE
+====================================================== */
+
+.stat-card h4 {
+  font-size: 15px;
+
+  font-weight: 600;
+
+  color: #64748b;
+
+  margin-bottom: 16px;
+
+  letter-spacing: 0.2px;
+}
+
+/* ======================================================
+   MAIN VALUE
+====================================================== */
+
+.stat-card h2 {
+  font-size: 28px;
+
+  font-weight: 700;
+
+  color: #0f172a;
+
+  line-height: 1.25;
+
+  margin: 0;
+
+  letter-spacing: -0.3px;
+}
+
+/* ======================================================
+   DOMINANT CATEGORY CARD
+====================================================== */
+
+.dominant-card h2 {
+  font-size: 18px;
+
+  line-height: 1.5;
+
+  font-weight: 700;
+
+  max-width: 200px;
+
+  word-break: break-word;
+}
+
+/* ======================================================
+   DESCRIPTION
+====================================================== */
+
+.stat-card p {
+  margin-top: 14px;
+
+  color: #64748b;
+
+  font-size: 16px;
+
+  line-height: 1.5;
+}
+
+/* ======================================================
+   RESPONSIVE
+====================================================== */
+
+@media (max-width: 1400px) {
+
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+}
+
+@media (max-width: 992px) {
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+@media (max-width: 640px) {
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    min-height: auto;
+  }
+
+  .stat-card h2 {
+    font-size: 40px;
+  }
+
+  .dominant-card h2 {
+    font-size: 26px;
+  }
+
+}

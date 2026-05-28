@@ -89,6 +89,20 @@ const IncidentDashboard = () => {
 
   const chartData = dashboardData?.chart_data;
 
+  // ======================================================
+  // REMOVE GENERAL / UNCATEGORIZED
+  // FROM CHART ONLY
+  // ======================================================
+
+  const filteredChartData = chartData?.filter(
+
+    (item) =>
+
+      item.Incident_Type !==
+      "General / Uncategorized"
+
+  );
+
   const tableData = dashboardData?.table_data;
 
   // ======================================================
@@ -135,9 +149,21 @@ const IncidentDashboard = () => {
 
       <div className="incident-dashboard__row-2">
 
-        <IncidentBarChart data={chartData} />
+        {/* ============================================= */}
+        {/* BAR CHART */}
+        {/* ============================================= */}
 
-        <StatusTable data={tableData} />
+        <IncidentBarChart
+          data={filteredChartData}
+        />
+
+        {/* ============================================= */}
+        {/* TABLE */}
+        {/* ============================================= */}
+
+        <StatusTable
+          data={tableData}
+        />
 
       </div>
 

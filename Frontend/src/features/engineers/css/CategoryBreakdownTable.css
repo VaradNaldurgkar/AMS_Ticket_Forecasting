@@ -1,0 +1,118 @@
+.category-breakdown {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* HEADER */
+
+.breakdown-header h2 {
+  font-size: 30px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.breakdown-header p {
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+/* MONTH */
+
+.month-breakdown {
+  margin-top: 20px;
+}
+
+.month-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 18px;
+}
+
+/* TABLE */
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.category-breakdown table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1100px;
+}
+
+.category-breakdown thead {
+  background: #f3f4f6;
+}
+
+.category-breakdown th {
+  padding: 18px;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.category-breakdown td {
+  padding: 18px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 15px;
+  color: #111827;
+  vertical-align: middle;
+}
+
+.category-breakdown tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* PRIORITY */
+
+.priority-badge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.priority-3 {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.priority-4 {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.priority-5 {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.priority-6 {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.month-breakdown:first-child {
+  margin-top: 16px;
+}
+
+/* ENGINEER PILL */
+
+.engineer-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #dcfce7;
+  color: #166534;
+
+  padding: 8px 14px;
+
+  border-radius: 999px;
+
+  font-size: 14px;
+  font-weight: 700;
+}

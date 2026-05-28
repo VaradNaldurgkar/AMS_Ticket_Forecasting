@@ -1,16 +1,19 @@
 import "../../css/Sidebar.css";
+
 import {
   FaChartLine,
   FaExclamationTriangle,
   FaServicestack,
-  FaCodeBranch
+  FaCodeBranch,
+  FaUsers
 } from "react-icons/fa";
+
 import { Link } from "react-router-dom";
 
 const Sidebar = ({ isOpen }) => {
   return (
     <div className={`sidebar ${isOpen ? "open" : ""}`}>
-      
+
       <ul className="sidebar-menu">
 
         <Link to="/predictions" className="menu-link">
@@ -38,6 +41,13 @@ const Sidebar = ({ isOpen }) => {
           <li className="menu-item">
             <FaCodeBranch className="icon" />
             <span>Call Code Bifurcation</span>
+          </li>
+        </Link>
+
+        <Link to="/engineers" className="menu-link">
+          <li className="menu-item">
+            <FaUsers className="icon" />
+            <span>Engineers</span>
           </li>
         </Link>
 

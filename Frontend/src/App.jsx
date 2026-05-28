@@ -9,6 +9,8 @@ import ServiceDashboard from "./features/service_request/Pages/ServiceDashboard"
 
 import IncidentDashboard from "./features/incident_request/pages/IncidentDashboard";
 
+import EngineersDashboard from "./features/engineers/pages/EngineersDashboard";
+
 function App() {
   return (
     <Layout>
@@ -37,6 +39,12 @@ function App() {
         <Route
           path="/service"
           element={<ServiceDashboard />}
+        />
+
+
+        <Route
+          path="/engineers"
+          element={<EngineersDashboard />}
         />
 
       </Routes>

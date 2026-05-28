@@ -31,6 +31,11 @@ from api.routes import incident_dashboard
 
 from api.routes import forecast_evaluation
 
+# ✅ NEW IMPORT
+from api.routes.fte_analysis_route import (
+    router as fte_router
+)
+
 # --------------------------------------------------
 # IMPORT PIPELINES
 # --------------------------------------------------
@@ -123,6 +128,16 @@ app.include_router(
     incident_dashboard.router,
     prefix="/api/incident-dashboard",
     tags=["Incident Dashboard"]
+)
+
+# --------------------------------------------------
+# ✅ FTE ANALYSIS APIs
+# --------------------------------------------------
+
+app.include_router(
+    fte_router,
+    prefix="/api/fte",
+    tags=["FTE Analysis"]
 )
 
 # --------------------------------------------------
