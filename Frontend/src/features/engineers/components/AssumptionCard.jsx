@@ -1,38 +1,128 @@
 import React from "react";
+
 import "../css/AssumptionCard.css";
 
 const AssumptionCard = () => {
+
   return (
+
     <div className="assumption-card dashboard-card">
 
-      <h2>Assumptions Used</h2>
+      {/* HEADER */}
 
-      <div className="assumption-item">
-        <h4>Avg Resolution Time</h4>
-        <p>110 minutes / ticket</p>
+      <div className="assumption-header">
+
+        <h2>
+          Assumptions & Forecast Logic
+        </h2>
+
+        <p>
+          Workforce planning assumptions used for FTE forecasting
+        </p>
+
       </div>
 
-      <div className="assumption-item">
-        <h4>Productive Capacity</h4>
-        <p>7,400 minutes / engineer / month</p>
+      {/* METRICS */}
+
+      <div className="assumption-grid">
+
+        <div className="assumption-metric">
+
+          <span className="metric-label">
+            Forecast Model
+          </span>
+
+          <h3>
+            ARIMA
+          </h3>
+
+          <p>
+            Time-series ticket forecasting
+          </p>
+
+        </div>
+
+        <div className="assumption-metric">
+
+          <span className="metric-label">
+            Productive Capacity
+          </span>
+
+          <h3>
+            7,400
+          </h3>
+
+          <p>
+            mins / engineer / month
+          </p>
+
+        </div>
+
+        <div className="assumption-metric">
+
+          <span className="metric-label">
+            SLA Dataset
+          </span>
+
+          <h3>
+            Feb 2026
+          </h3>
+
+          <p>
+            Historical resolution data
+          </p>
+
+        </div>
+
+        <div className="assumption-metric">
+
+          <span className="metric-label">
+            Resolution Logic
+          </span>
+
+          <h3>
+            Dynamic
+          </h3>
+
+          <p>
+            Category & priority based
+          </p>
+
+        </div>
+
       </div>
 
-      <div className="assumption-item">
-        <h4>Formula</h4>
+      {/* FORMULA */}
+
+      <div className="formula-section">
+
+        <h4>
+          Workforce Formula
+        </h4>
 
         <div className="formula-box">
-          FTE = (Predicted Tickets × Avg Resolution Time)
+
+          FTE = Σ(Category Tickets × Avg Resolution Time)
           ÷ Productive Capacity
+
         </div>
+
       </div>
 
-      <div className="warning-box">
-        These assumptions can be updated in settings to
-        recalculate results.
+      {/* LOGIC */}
+
+      <div className="logic-box">
+
+        Future category workload distribution is derived
+        from historical SLA patterns observed in the
+        Feb 2026 dataset.
+
       </div>
 
     </div>
+
   );
+
 };
 
 export default AssumptionCard;

@@ -1,52 +1,93 @@
 .service-dashboard {
   padding: 16px 20px;
-
   background: #f4f7fb;
-
   min-height: 100vh;
 }
 
-/* HEADER */
+/* =====================================================
+   HEADER
+===================================================== */
 
 .dashboard-header {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .dashboard-header h1 {
   font-size: 26px;
-
   font-weight: 700;
-
   color: #0f172a;
-
   margin-bottom: 2px;
 }
 
 .dashboard-header p {
   color: #64748b;
-
   font-size: 13px;
+  margin-bottom: 16px;
 }
 
-/* SUMMARY SECTION */
+/* =====================================================
+   DROPDOWN FILTER
+===================================================== */
+
+.dashboard-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-select {
+  min-width: 260px;
+
+  padding: 10px 14px;
+
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  color: #0f172a;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.filter-select:hover {
+  border-color: #00A76F;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #00A76F;
+  box-shadow: 0 0 0 3px rgba(0, 167, 111, 0.12);
+}
+
+/* =====================================================
+   SUMMARY SECTION
+===================================================== */
 
 .summary-grid {
   display: grid;
-
   grid-template-columns: repeat(3, 1fr);
-
   gap: 12px;
-
   margin-bottom: 18px;
 }
 
 .summary-card {
   background: white;
-
   border-radius: 14px;
-
   padding: 14px;
-
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 
   text-align: center;
@@ -54,121 +95,97 @@
   height: 150px;
 
   display: flex;
-
   flex-direction: column;
-
   justify-content: center;
 }
 
 .summary-card h3 {
   font-size: 13px;
-
   color: #475569;
-
   margin-bottom: 10px;
-
   font-weight: 600;
 }
 
 .summary-card h1 {
   font-size: 26px;
-
   font-weight: 700;
-
   color: #0f172a;
-
   margin-bottom: 6px;
 }
 
 .summary-card p {
   color: #00A76F;
-
   font-size: 13px;
 }
 
-/* TOP SECTION */
+/* =====================================================
+   TOP SECTION
+===================================================== */
 
 .top-section {
   display: grid;
-
   grid-template-columns: 1fr 1fr;
-
   gap: 16px;
 }
 
 .chart-card {
   background: white;
-
   border-radius: 14px;
-
   padding: 18px;
-
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-
   height: 400px;
 }
 
 .chart-card h2 {
   font-size: 18px;
-
   color: #0f172a;
-
   margin-bottom: 16px;
 }
 
-/* PIE CHART */
+/* =====================================================
+   PIE CHART
+===================================================== */
 
 .pie-chart-wrapper {
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
-
   margin-top: 10px;
 }
 
 .pie-legend {
   flex: 1;
-
   padding-left: 10px;
 }
 
 .legend-item {
   display: flex;
-
   align-items: center;
-
   gap: 10px;
-
   margin-bottom: 16px;
 }
 
 .legend-color {
   width: 14px;
-
   height: 14px;
-
   border-radius: 50%;
 }
 
 .legend-name {
   flex: 1;
-
   font-size: 14px;
-
   color: #334155;
 }
 
 .legend-value {
   font-size: 14px;
-
   font-weight: 700;
-
   color: #0f172a;
 }
 
-/* RESPONSIVE */
+/* =====================================================
+   RESPONSIVE
+===================================================== */
 
 @media screen and (max-width: 1200px) {
 
@@ -178,6 +195,16 @@
 
   .top-section {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-filter {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-select {
+    width: 100%;
+    min-width: 100%;
   }
 
 }

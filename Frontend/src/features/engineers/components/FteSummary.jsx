@@ -13,7 +13,7 @@ const FteSummary = ({ data }) => {
 
       <h2>
         FTE Summary
-        <span>(Next 4 Months)</span>
+        <span>(Next 3 Months)</span>
       </h2>
 
       <div className="donut-chart">

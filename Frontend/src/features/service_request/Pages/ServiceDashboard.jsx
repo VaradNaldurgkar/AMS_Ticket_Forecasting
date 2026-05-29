@@ -8,46 +8,91 @@ import "../css/serviceDashboard.css";
 
 const ServiceDashboard = () => {
 
+  const [dashboardData, setDashboardData] =
+    useState(null);
+
+  const [topRequestData, setTopRequestData] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [selectedType, setSelectedType] =
+    useState("asset");
+
   // ======================================================
-  // STATE
-  // ======================================================
-
-  const [dashboardData, setDashboardData] = useState(null);
-
-  const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState("");
-
-  // ======================================================
-  // API CALL
+  // LOAD DASHBOARD BASED ON DROPDOWN
   // ======================================================
 
   useEffect(() => {
 
-    fetch("http://127.0.0.1:8000/api/service/service-breakdown")
+    const loadDashboard = async () => {
 
-      .then((response) => response.json())
+      try {
 
-      .then((data) => {
+        setLoading(true);
 
-        setDashboardData(data);
+        const dashboardEndpoint =
+
+          selectedType === "asset"
+
+            ? "http://127.0.0.1:8000/api/requisition/asset-dashboard"
+
+            : "http://127.0.0.1:8000/api/requisition/software-dashboard";
+
+        const chartEndpoint =
+
+          selectedType === "asset"
+
+            ? "http://127.0.0.1:8000/api/requisition/asset-breakdown"
+
+            : "http://127.0.0.1:8000/api/requisition/software-breakdown";
+
+        const dashboardResponse =
+          await fetch(dashboardEndpoint);
+
+        const chartResponse =
+          await fetch(chartEndpoint);
+
+        const dashboardJson =
+          await dashboardResponse.json();
+
+        const chartJson =
+          await chartResponse.json();
+
+        setDashboardData(
+          dashboardJson
+        );
+
+        setTopRequestData(
+          chartJson
+        );
 
         setLoading(false);
-      })
 
-      .catch((err) => {
+      } catch (err) {
 
         console.error(err);
 
-        setError("Failed to load dashboard");
+        setError(
+          "Failed to load dashboard"
+        );
 
         setLoading(false);
-      });
 
-  }, []);
+      }
+
+    };
+
+    loadDashboard();
+
+  }, [selectedType]);
 
   // ======================================================
-  // LOADING UI
+  // LOADING
   // ======================================================
 
   if (loading) {
@@ -56,14 +101,18 @@ const ServiceDashboard = () => {
 
       <div className="service-dashboard">
 
-        <h2>Loading Dashboard...</h2>
+        <h2>
+          Loading Dashboard...
+        </h2>
 
       </div>
+
     );
+
   }
 
   // ======================================================
-  // ERROR UI
+  // ERROR
   // ======================================================
 
   if (error) {
@@ -75,46 +124,57 @@ const ServiceDashboard = () => {
         <h2>{error}</h2>
 
       </div>
+
     );
+
   }
 
   // ======================================================
-  // SUMMARY DATA
+  // SUMMARY CARDS
   // ======================================================
 
   const summaryData = [
 
     {
-      title: "Total Service Tickets",
+      title: "Total Requests",
 
       value:
-        dashboardData.summary_cards.total_tickets.toLocaleString(),
-
-      subtitle: "All generated tickets",
-    },
-
-    {
-      title: "Most Generated Ticket",
-
-      value:
-        dashboardData.summary_cards.top_ticket_count.toLocaleString(),
+        dashboardData.total_requests.toLocaleString(),
 
       subtitle:
-        dashboardData.summary_cards.top_ticket.slice(0, 35),
+        selectedType === "asset"
+          ? "Asset Requests"
+          : "Software Requests",
     },
 
     {
-      title: "Total Categories",
+      title:
+        selectedType === "asset"
+          ? "Top Requested Asset"
+          : "Top Requested Software",
 
       value:
-        dashboardData.summary_cards.total_categories.toLocaleString(),
+        dashboardData.top_count.toLocaleString(),
 
-      subtitle: "Service ticket categories",
+      subtitle:
+        dashboardData.top_item,
     },
+
+    {
+      title:
+        "Total Categories",
+
+      value:
+        dashboardData.total_categories.toLocaleString(),
+
+      subtitle:
+        "Available Categories",
+    },
+
   ];
 
   // ======================================================
-  // FINAL UI
+  // UI
   // ======================================================
 
   return (
@@ -125,11 +185,43 @@ const ServiceDashboard = () => {
 
       <div className="dashboard-header">
 
-        <h1>Service Ticket Bifurcation</h1>
+        <h1>
+          Service Ticket Bifurcation
+        </h1>
 
         <p>
           Overview of service request bifurcation
         </p>
+
+        {/* PROFESSIONAL FILTER */}
+
+        <div className="dashboard-filter">
+
+          <span className="filter-label">
+            Request Type
+          </span>
+
+          <select
+            className="filter-select"
+            value={selectedType}
+            onChange={(e) =>
+              setSelectedType(
+                e.target.value
+              )
+            }
+          >
+
+            <option value="asset">
+              IT Asset Requisition
+            </option>
+
+            <option value="software">
+              Software Requisition
+            </option>
+
+          </select>
+
+        </div>
 
       </div>
 
@@ -137,35 +229,47 @@ const ServiceDashboard = () => {
 
       <div className="summary-grid">
 
-        {summaryData.map((card, index) => (
+        {summaryData.map(
+          (card, index) => (
 
-          <SummaryCard
-            key={index}
-            title={card.title}
-            value={card.value}
-            subtitle={card.subtitle}
-          />
+            <SummaryCard
+              key={index}
+              title={card.title}
+              value={card.value}
+              subtitle={card.subtitle}
+            />
 
-        ))}
+          )
+        )}
 
       </div>
 
-      {/* CHART SECTION */}
+      {/* CHARTS */}
 
       <div className="top-section">
 
         <CallCodePieChart
-          data={dashboardData.pie_chart_data}
+          data={
+            dashboardData.pie_chart_data
+          }
+          selectedType={
+            selectedType
+          }
         />
 
         <TopServiceRequestsChart
-          data={dashboardData.bar_chart_data}
+          data={topRequestData}
+          selectedType={
+            selectedType
+          }
         />
 
       </div>
 
     </div>
+
   );
+
 };
 
 export default ServiceDashboard;

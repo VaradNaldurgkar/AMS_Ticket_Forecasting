@@ -36,6 +36,10 @@ from api.routes.fte_analysis_route import (
     router as fte_router
 )
 
+from api.routes.requisition_route import (
+    router as requisition_router
+)
+
 # --------------------------------------------------
 # IMPORT PIPELINES
 # --------------------------------------------------
@@ -138,6 +142,13 @@ app.include_router(
     fte_router,
     prefix="/api/fte",
     tags=["FTE Analysis"]
+)
+
+
+app.include_router(
+    requisition_router,
+    prefix="/api/requisition",
+    tags=["Requisition"]
 )
 
 # --------------------------------------------------

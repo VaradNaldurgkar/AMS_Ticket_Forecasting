@@ -11,7 +11,6 @@ import {
 
 // Existing UI components
 import HealthSummary from "../components/Summary/HealthSummary";
-import InsightCard from "../components/Insight/InsightCard";
 import ErrorAnalysis from "../components/Analytics/ErrorAnalysis";
 
 // API SERVICES
@@ -256,9 +255,6 @@ const PredictionDashboard = () => {
 
         {/* RIGHT PANEL */}
         <div className="right-panel">
-
-          {/* WORKFORCE INSIGHT CARD */}
-          <InsightCard />
 
           {/* ERROR ANALYSIS */}
           <ErrorAnalysis data={chartData} />

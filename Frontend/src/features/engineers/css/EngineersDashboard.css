@@ -1,5 +1,5 @@
 .engineers-dashboard {
-  padding: 32px;
+  padding: 24px 28px;
   background: #f8fafc;
 }
 
@@ -10,11 +10,11 @@
 .engineers-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
 
-  margin-bottom: 34px;
+  margin-bottom: 24px;
 
-  padding-bottom: 24px;
+  padding-bottom: 18px;
 
   border-bottom: 1px solid #e5e7eb;
 }
@@ -26,29 +26,30 @@
 .header-left h1 {
   font-family: "Inter", sans-serif;
 
-  font-size: 52px;
+  font-size: 28px;
 
   font-weight: 700;
 
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
 
   color: #0f172a;
 
-  line-height: 1.1;
+  line-height: 1.2;
 
   margin: 0;
 }
 
 .header-left p {
-  margin-top: 14px;
+  margin-top: 6px;
 
-  font-size: 18px;
+  font-size: 15px;
 
   color: #64748b;
 
-  line-height: 1.6;
-}
+  line-height: 1.5;
 
+  max-width: 620px;
+}
 /* =======================================================
    DATE FILTER
 ======================================================= */

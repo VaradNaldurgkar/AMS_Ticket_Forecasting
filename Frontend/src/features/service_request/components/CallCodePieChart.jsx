@@ -11,17 +11,34 @@ const COLORS = [
   "#8B5CF6",
   "#F59E0B",
   "#EF4444",
+  "#06B6D4",
+  "#EC4899",
+  "#84CC16",
+  "#F97316",
+  "#6366F1",
 ];
 
-const CallCodePieChart = ({ data }) => {
+const CallCodePieChart = ({
+  data,
+  selectedType,
+}) => {
+
   return (
+
     <div className="chart-card">
 
-      <h2>Bifurcation by Call Code</h2>
+      <h2>
+        {selectedType === "asset"
+          ? "Asset Distribution"
+          : "Software Distribution"}
+      </h2>
 
       <div className="pie-chart-wrapper">
 
-        <PieChart width={300} height={250}>
+        <PieChart
+          width={300}
+          height={250}
+        >
 
           <Pie
             data={data}
@@ -33,12 +50,21 @@ const CallCodePieChart = ({ data }) => {
             outerRadius={85}
           >
 
-            {data.map((entry, index) => (
-              <Cell
-                key={index}
-                fill={COLORS[index % COLORS.length]}
-              />
-            ))}
+            {data.map(
+              (entry, index) => (
+
+                <Cell
+                  key={index}
+                  fill={
+                    COLORS[
+                      index %
+                      COLORS.length
+                    ]
+                  }
+                />
+
+              )
+            )}
 
           </Pie>
 
@@ -48,36 +74,46 @@ const CallCodePieChart = ({ data }) => {
 
         <div className="pie-legend">
 
-          {data.map((item, index) => (
-
-            <div className="legend-item" key={index}>
+          {data.map(
+            (item, index) => (
 
               <div
-                className="legend-color"
-                style={{
-                  background:
-                    COLORS[index % COLORS.length],
-                }}
-              />
+                className="legend-item"
+                key={index}
+              >
 
-              <span className="legend-name">
-                {item.name}
-              </span>
+                <div
+                  className="legend-color"
+                  style={{
+                    background:
+                      COLORS[
+                        index %
+                        COLORS.length
+                      ],
+                  }}
+                />
 
-              <span className="legend-value">
-                {item.tickets}
-              </span>
+                <span className="legend-name">
+                  {item.name}
+                </span>
 
-            </div>
+                <span className="legend-value">
+                  {item.tickets}
+                </span>
 
-          ))}
+              </div>
+
+            )
+          )}
 
         </div>
 
       </div>
 
     </div>
+
   );
+
 };
 
 export default CallCodePieChart;

@@ -5,53 +5,71 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  ResponsiveContainer,
 } from "recharts";
 
-const TopServiceRequestsChart = ({ data }) => {
+const TopServiceRequestsChart = ({
+  data,
+  selectedType,
+}) => {
   return (
     <div className="chart-card">
 
-      <h2>Top Service Requests</h2>
+      <h2>
+        {selectedType === "asset"
+          ? "Top Requested Assets"
+          : "Top Requested Software"}
+      </h2>
 
-      <BarChart
-        width={520}
-        height={300}
-        data={data}
-        layout="vertical"
-        margin={{
-          top: 5,
-          right: 20,
-          left: 60,
-          bottom: 5,
-        }}
+      <ResponsiveContainer
+        width="100%"
+        height={320}
       >
 
-        <CartesianGrid
-          strokeDasharray="3 3"
-          horizontal={false}
-        />
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{
+            top: 10,
+            right: 20,
+            left: 40,
+            bottom: 10,
+          }}
+        >
 
-        <XAxis
-          type="number"
-          tick={{ fontSize: 12 }}
-        />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            horizontal={false}
+          />
 
-        <YAxis
-          type="category"
-          dataKey="name"
-          tick={{ fontSize: 12 }}
-          width={140}
-        />
+          <XAxis
+            type="number"
+            tick={{ fontSize: 12 }}
+          />
 
-        <Tooltip />
+          <YAxis
+            type="category"
+            dataKey="name"
+            tick={{ fontSize: 12 }}
+            width={180}
+          />
 
-        <Bar
-          dataKey="tickets"
-          fill="#00A76F"
-          radius={[0, 6, 6, 0]}
-        />
+          <Tooltip
+            formatter={(value) => [
+              value,
+              "Count",
+            ]}
+          />
 
-      </BarChart>
+          <Bar
+            dataKey="count"
+            fill="#00A76F"
+            radius={[0, 6, 6, 0]}
+          />
+
+        </BarChart>
+
+      </ResponsiveContainer>
 
     </div>
   );
