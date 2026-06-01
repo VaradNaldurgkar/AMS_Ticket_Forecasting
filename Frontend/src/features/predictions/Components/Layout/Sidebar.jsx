@@ -47,7 +47,7 @@ const Sidebar = ({ isOpen }) => {
         <Link to="/engineers" className="menu-link">
           <li className="menu-item">
             <FaUsers className="icon" />
-            <span>Engineers</span>
+            <span>FTE Analysis</span>
           </li>
         </Link>
 

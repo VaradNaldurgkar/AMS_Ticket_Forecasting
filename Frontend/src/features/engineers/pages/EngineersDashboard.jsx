@@ -7,7 +7,7 @@ import WorkforceOverview from "../components/WorkforceOverview";
 import FteSummary from "../components/FteSummary";
 import FteAnalysisTable from "../components/FteAnalysisTable";
 import AssumptionCard from "../components/AssumptionCard";
-import CategoryBreakdownTable from "../components/CategoryBreakdownTable";
+import CategoryBreakdownModal from "../components/CategoryBreakdownModal";
 
 const EngineersDashboard = () => {
 
@@ -16,6 +16,12 @@ const EngineersDashboard = () => {
 
   const [loading, setLoading] =
     useState(true);
+
+  const [selectedMonth, setSelectedMonth] =
+    useState(null);
+
+  const [isModalOpen, setIsModalOpen] =
+    useState(false);
 
   // ======================================================
   // FETCH FORECAST + FTE ANALYSIS
@@ -70,10 +76,6 @@ const EngineersDashboard = () => {
                   row?.forecast ??
                   0;
 
-                // ----------------------------------------
-                // CALL BACKEND FTE API
-                // ----------------------------------------
-
                 const fteResponse =
                   await fetch(
                     `http://127.0.0.1:8000/api/fte/calculate-fte/${tickets}`
@@ -81,15 +83,6 @@ const EngineersDashboard = () => {
 
                 const fteData =
                   await fteResponse.json();
-
-                console.log(
-                  "FTE API RESPONSE:",
-                  fteData
-                );
-
-                // ----------------------------------------
-                // FINAL MONTH OBJECT
-                // ----------------------------------------
 
                 return {
 
@@ -125,11 +118,6 @@ const EngineersDashboard = () => {
             )
           );
 
-        console.log(
-          "FINAL DASHBOARD DATA:",
-          dashboardData
-        );
-
         setProcessedData(
           dashboardData
         );
@@ -154,6 +142,36 @@ const EngineersDashboard = () => {
   }, []);
 
   // ======================================================
+  // MODAL HANDLERS
+  // ======================================================
+
+  const handleViewBreakdown = (
+    month
+  ) => {
+
+    setSelectedMonth(
+      month
+    );
+
+    setIsModalOpen(
+      true
+    );
+
+  };
+
+  const closeModal = () => {
+
+    setSelectedMonth(
+      null
+    );
+
+    setIsModalOpen(
+      false
+    );
+
+  };
+
+  // ======================================================
   // LOADING STATE
   // ======================================================
 
@@ -176,6 +194,16 @@ const EngineersDashboard = () => {
   }
 
   // ======================================================
+  // SELECTED MONTH DATA
+  // ======================================================
+
+  const selectedMonthData =
+    processedData.find(
+      item =>
+        item.month === selectedMonth
+    );
+
+  // ======================================================
   // UI
   // ======================================================
 
@@ -189,7 +217,7 @@ const EngineersDashboard = () => {
 
         <div className="header-left">
 
-          <h1>Engineers</h1>
+          <h1>FTE Analysis</h1>
 
           <p>
             Workforce capacity planning and FTE analysis
@@ -221,31 +249,47 @@ const EngineersDashboard = () => {
 
       {/* FTE TABLE */}
 
-<div className="fte-table-section">
+      <div className="fte-table-section">
 
-  <FteAnalysisTable
-    data={processedData}
-  />
+        <FteAnalysisTable
+          data={processedData}
+          onViewBreakdown={
+            handleViewBreakdown
+          }
+        />
 
-</div>
+      </div>
 
-{/* CATEGORY BREAKDOWN */}
+      {/* BREAKDOWN MODAL */}
 
-<div className="category-section">
+      <CategoryBreakdownModal
 
-  <CategoryBreakdownTable
-    data={processedData}
-  />
+        isOpen={
+          isModalOpen
+        }
 
-</div>
+        month={
+          selectedMonth
+        }
 
-{/* ASSUMPTION CARD */}
+        data={
+          selectedMonthData
+            ?.workloadBreakdown || []
+        }
 
-<div className="assumption-section">
+        onClose={
+          closeModal
+        }
 
-  <AssumptionCard />
+      />
 
-</div>
+      {/* ASSUMPTION CARD */}
+
+      <div className="assumption-section">
+
+        <AssumptionCard />
+
+      </div>
 
     </div>
 

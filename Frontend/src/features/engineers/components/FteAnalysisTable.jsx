@@ -2,7 +2,10 @@ import React from "react";
 
 import "../css/FteAnalysisTable.css";
 
-const FteAnalysisTable = ({ data }) => {
+const FteAnalysisTable = ({
+  data,
+  onViewBreakdown
+}) => {
 
   // ======================================================
   // GET DOMINANT PRIORITY
@@ -107,6 +110,10 @@ const FteAnalysisTable = ({ data }) => {
               Utilization
             </th>
 
+            <th>
+              Details
+            </th>
+
           </tr>
 
         </thead>
@@ -129,19 +136,13 @@ const FteAnalysisTable = ({ data }) => {
 
                 <tr key={index}>
 
-                  {/* MONTH */}
-
                   <td>
                     {item.month}
                   </td>
 
-                  {/* TICKETS */}
-
                   <td>
                     {item.tickets.toLocaleString()}
                   </td>
-
-                  {/* TOTAL EFFORT */}
 
                   <td>
                     {Math.round(
@@ -149,25 +150,17 @@ const FteAnalysisTable = ({ data }) => {
                     ).toLocaleString()}
                   </td>
 
-                  {/* FTE */}
-
                   <td>
                     {item.fte}
                   </td>
-
-                  {/* ENGINEERS */}
 
                   <td>
                     {item.engineers}
                   </td>
 
-                  {/* CAPACITY */}
-
                   <td>
                     {item.capacity.toLocaleString()}
                   </td>
-
-                  {/* DOMINANT PRIORITY */}
 
                   <td>
 
@@ -182,8 +175,6 @@ const FteAnalysisTable = ({ data }) => {
 
                   </td>
 
-                  {/* CONTRIBUTION */}
-
                   <td>
 
                     <span className="contribution-text">
@@ -196,8 +187,6 @@ const FteAnalysisTable = ({ data }) => {
                     </span>
 
                   </td>
-
-                  {/* UTILIZATION */}
 
                   <td>
 
@@ -212,16 +201,30 @@ const FteAnalysisTable = ({ data }) => {
                         <div
                           className="progress-fill"
                           style={{
-
                             width:
                               `${item.utilization}%`
-
                           }}
-                        ></div>
+                        />
 
                       </div>
 
                     </div>
+
+                  </td>
+
+                  {/* DETAILS BUTTON */}
+
+                  <td>
+
+                    <button
+  className="info-btn"
+  onClick={() =>
+    onViewBreakdown(item.month)
+  }
+  title="View Category Breakdown"
+>
+  i
+</button>
 
                   </td>
 

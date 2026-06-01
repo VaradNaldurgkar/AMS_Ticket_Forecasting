@@ -564,6 +564,54 @@
   background: #1d4ed8;
 }
 
+
+
+.prediction-page-header {
+
+  margin-bottom: 28px;
+
+  padding-bottom: 18px;
+
+  border-bottom: 1px solid #d1d5db;
+}
+
+.prediction-title {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.prediction-subtitle {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+.prediction-header-left h1 {
+
+  margin: 0;
+
+  font-size: 32px;
+
+  font-weight: 700;
+
+  color: #0f172a;
+
+  line-height: 1.2;
+}
+
+.prediction-header-left p {
+
+  margin: 8px 0 0 0;
+
+  font-size: 15px;
+
+  color: #64748b;
+
+  line-height: 1.5;
+}
+
 /* =======================================================
    RESPONSIVE
 ======================================================= */
@@ -603,4 +651,14 @@
   .forecast-value {
     font-size: 16px;
   }
+
+
+  /* ==========================================
+   PAGE HEADER
+========================================== */
+
+
+
+
 }
+

@@ -115,9 +115,22 @@ const PredictionDashboard = () => {
 
   return (
 
-    <div className="dashboard">
+     <div className="dashboard">
 
-      {/* HEALTH SUMMARY */}
+      {/* PAGE HEADER */}
+
+      <div className="prediction-page-header">
+
+  <h1 className="prediction-title">
+    Prediction Analytics
+  </h1>
+
+  <p className="prediction-subtitle">
+    Historical trends, forecasting accuracy and future ticket predictions
+  </p>
+
+</div>
+
       <HealthSummary />
 
       {/* ================================================= */}

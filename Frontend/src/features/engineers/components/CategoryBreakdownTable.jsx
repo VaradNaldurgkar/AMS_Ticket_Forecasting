@@ -4,23 +4,30 @@ import "../css/CategoryBreakdownTable.css";
 
 const PRODUCTIVE_MINUTES = 7400;
 
-const CategoryBreakdownTable = ({ data }) => {
+const CategoryBreakdownTable = ({
+  data,
+  hideHeader = false
+}) => {
 
   return (
 
     <div className="category-breakdown dashboard-card">
 
-      <div className="breakdown-header">
+      {!hideHeader && (
 
-        <h2>
-          Category Workforce Breakdown
-        </h2>
+        <div className="breakdown-header">
 
-        <p>
-          Engineer allocation by category and priority
-        </p>
+          <h2>
+            Category Workforce Breakdown
+          </h2>
 
-      </div>
+          <p>
+            Engineer allocation by category and priority
+          </p>
+
+        </div>
+
+      )}
 
       {data.map((monthData, monthIndex) => (
 
