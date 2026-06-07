@@ -1,36 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import "../../css/HealthSummary.css";
 
-const HealthSummary = () => {
-
-  const [kpis, setKpis] = useState(null);
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-
-    fetch("http://127.0.0.1:8000/api/prediction/actual-vs-predicted")
-
-      .then((res) => res.json())
-
-      .then((resData) => {
-
-        setKpis(resData.kpis);
-        setData(resData.data);
-
-      })
-
-      .catch((err) =>
-        console.error("API Error:", err)
-      );
-
-  }, []);
+const HealthSummary = ({ data }) => {
 
   // ====================================================
   // LOADING
   // ====================================================
 
-  if (!kpis || data.length === 0) {
-
+  if (!data || data.length === 0) {
     return (
       <div className="summary-container">
         Loading...
@@ -39,26 +16,46 @@ const HealthSummary = () => {
   }
 
   // ====================================================
+  // FORECAST ACCURACY
+  // ====================================================
+
+  const accuracy = (
+    100 -
+    (
+      data.reduce(
+        (sum, d) =>
+          sum +
+          (Math.abs(d.actual - d.predicted) / d.actual) * 100,
+        0
+      ) / data.length
+    )
+  ).toFixed(2);
+
+  // ====================================================
   // AVG ERROR
   // ====================================================
 
-  const errors = data.map(d => d.error);
+  const errors = data.map(
+    (d) => Math.abs(d.actual - d.predicted)
+  );
 
   const avgError = Math.round(
-    errors.reduce((a, b) => a + b, 0)
-    / errors.length
+    errors.reduce((a, b) => a + b, 0) /
+    errors.length
   );
 
   // ====================================================
   // DEVIATIONS
   // ====================================================
 
-  const deviations = data.map(d => ({
+  const deviations = data.map((d) => ({
 
     month: d.month,
 
+    predicted: d.predicted,
+
     deviation:
-      ((d.error / d.actual) * 100)
+      (Math.abs(d.actual - d.predicted) / d.actual) * 100,
 
   }));
 
@@ -68,7 +65,6 @@ const HealthSummary = () => {
 
   const bestMonth = deviations.reduce(
     (min, curr) =>
-
       curr.deviation < min.deviation
         ? curr
         : min
@@ -80,7 +76,6 @@ const HealthSummary = () => {
 
   const worstMonth = deviations.reduce(
     (max, curr) =>
-
       curr.deviation > max.deviation
         ? curr
         : max
@@ -91,10 +86,7 @@ const HealthSummary = () => {
   // ====================================================
 
   const totalForecast = data.reduce(
-
-    (sum, d) =>
-      sum + d.predicted,
-
+    (sum, d) => sum + d.predicted,
     0
   );
 
@@ -110,7 +102,7 @@ const HealthSummary = () => {
         </h4>
 
         <p className="value green">
-          {kpis.accuracy}%
+          {accuracy}%
         </p>
 
         <span>

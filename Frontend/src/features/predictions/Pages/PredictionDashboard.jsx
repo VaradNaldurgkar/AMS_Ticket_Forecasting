@@ -15,7 +15,7 @@ import ErrorAnalysis from "../components/Analytics/ErrorAnalysis";
 
 // API SERVICES
 import {
-  getForecastEvaluation,
+  getActualVsPredicted,
   getFutureForecast,
 } from "../services/predictionService";
 
@@ -23,6 +23,9 @@ const PredictionDashboard = () => {
 
   const [chartData, setChartData] = useState([]);
   const [forecastData, setForecastData] = useState([]);
+  const [showAllMonths, setShowAllMonths] =
+    useState(false);
+
   const [kpis, setKpis] = useState({
     accuracy: 95.78,
     mape: 4.22,
@@ -38,50 +41,41 @@ const PredictionDashboard = () => {
 
       try {
 
-        // ================================================
-        // HISTORICAL EVALUATION
-        // ================================================
+        const past =
+          await getActualVsPredicted();
 
-        const past = await getForecastEvaluation();
-
-        // ================================================
-        // FUTURE FORECAST
-        // ================================================
-
-        const future = await getFutureForecast();
-
-        // ================================================
-        // SET HISTORICAL DATA
-        // ================================================
+        const future =
+          await getFutureForecast();
 
         if (past && past.data) {
 
           setChartData(past.data);
 
-          // ==============================================
-          // CALCULATE KPIs
-          // ==============================================
-
-          const avgError =
+          const avgErrorPercentage =
             past.data.reduce(
               (sum, item) =>
-                sum + item.error_percentage,
+                sum +
+                (
+                  Math.abs(
+                    item.actual -
+                    item.predicted
+                  ) /
+                  item.actual
+                ) *
+                100,
               0
             ) / past.data.length;
 
           const accuracy = (
-            100 - avgError
+            100 - avgErrorPercentage
           ).toFixed(2);
 
           setKpis({
             accuracy,
-            mape: avgError.toFixed(2),
+            mape:
+              avgErrorPercentage.toFixed(2),
           });
         }
-
-        // ================================================
-        // SET FUTURE FORECAST
-        // ================================================
 
         if (future) {
           setForecastData(future);
@@ -113,33 +107,80 @@ const PredictionDashboard = () => {
     );
   }
 
+  // ====================================================
+  // SHOW LATEST 4 MONTHS ONLY
+  // ====================================================
+
+  const visibleChartData =
+    showAllMonths
+      ? chartData
+      : chartData.slice(-4);
+
   return (
 
-     <div className="dashboard">
+    <div className="dashboard">
 
       {/* PAGE HEADER */}
 
       <div className="prediction-page-header">
 
-  <h1 className="prediction-title">
-    Prediction Analytics
-  </h1>
+        <h1 className="prediction-title">
+          Prediction Analytics
+        </h1>
 
-  <p className="prediction-subtitle">
-    Historical trends, forecasting accuracy and future ticket predictions
-  </p>
+        <p className="prediction-subtitle">
+          Historical trends, forecasting accuracy and future ticket predictions
+        </p>
 
-</div>
+      </div>
 
-      <HealthSummary />
+      <HealthSummary data={chartData} />
 
-      {/* ================================================= */}
-      {/* KPI CARDS */}
-      {/* ================================================= */}
+{/* SHOW MORE BUTTON */}
 
-      <div className="kpi-row">
+{chartData.length > 4 && (
 
-        {chartData.map((item, index) => {
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "flex-end",
+      alignItems: "center",
+      marginTop: "10px",
+      marginBottom: "12px",
+      paddingRight: "5px",
+    }}
+  >
+    <button
+      onClick={() =>
+        setShowAllMonths(
+          !showAllMonths
+        )
+      }
+      style={{
+        padding: "8px 16px",
+        fontSize: "13px",
+        fontWeight: "600",
+        borderRadius: "8px",
+        border: "1px solid #d1d5db",
+        background: "#ffffff",
+        color: "#374151",
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+      }}
+    >
+      {showAllMonths
+        ? "Show Less"
+        : "Show More"}
+    </button>
+  </div>
+
+)}
+
+{/* KPI CARDS */}
+
+<div className="kpi-row">
+
+        {visibleChartData.map((item, index) => {
 
           const error = Math.abs(
             item.actual - item.predicted
@@ -166,15 +207,12 @@ const PredictionDashboard = () => {
               key={index}
             >
 
-              {/* HEADER */}
               <div className="kpi-header">
                 {item.month}
               </div>
 
-              {/* BODY */}
               <div className="kpi-body">
 
-                {/* ACTUAL + PREDICTED */}
                 <div className="kpi-main">
 
                   <div>
@@ -199,7 +237,6 @@ const PredictionDashboard = () => {
 
                 </div>
 
-                {/* DEVIATION */}
                 <div
                   className={`kpi-deviation ${
                     isHigh ? "red" : "green"
@@ -208,7 +245,6 @@ const PredictionDashboard = () => {
                   {isHigh ? "↓" : "↑"} {deviation}%
                 </div>
 
-                {/* SPARKLINE */}
                 <div className="kpi-sparkline">
 
                   <ResponsiveContainer
@@ -238,7 +274,6 @@ const PredictionDashboard = () => {
 
               </div>
 
-              {/* FOOTER */}
               <div className="kpi-footer">
                 Error: {error.toFixed(0)} tickets
               </div>
@@ -249,13 +284,11 @@ const PredictionDashboard = () => {
 
       </div>
 
-      {/* ================================================= */}
+
       {/* MAIN ANALYTICS GRID */}
-      {/* ================================================= */}
 
       <div className="analytics-grid">
 
-        {/* LEFT CHART */}
         <div className="chart-container">
 
           <h3>
@@ -266,13 +299,10 @@ const PredictionDashboard = () => {
 
         </div>
 
-        {/* RIGHT PANEL */}
         <div className="right-panel">
 
-          {/* ERROR ANALYSIS */}
           <ErrorAnalysis data={chartData} />
 
-          {/* KEY CHANGES */}
           <div className="changes-card">
 
             <h4>
@@ -304,9 +334,7 @@ const PredictionDashboard = () => {
 
       </div>
 
-      {/* ================================================= */}
       {/* FUTURE FORECAST */}
-      {/* ================================================= */}
 
       <div className="forecast-card">
 
