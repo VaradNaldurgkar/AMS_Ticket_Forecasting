@@ -9,7 +9,9 @@ import ServiceDashboard from "./features/service_request/Pages/ServiceDashboard"
 
 import IncidentDashboard from "./features/incident_request/pages/IncidentDashboard";
 
-import EngineersDashboard from "./features/engineers/pages/EngineersDashboard";
+import FTE_Analysis from "./features/FTE_Analysis/Pages/FTE_Analysis";
+
+import EngineersDashboard from "./features/Engineers/Pages/EngineersDashboard";
 
 function App() {
   return (
@@ -41,6 +43,10 @@ function App() {
           element={<ServiceDashboard />}
         />
 
+        <Route
+          path="/fte-analysis"
+          element={<FTE_Analysis />}
+        />
 
         <Route
           path="/engineers"

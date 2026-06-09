@@ -5,7 +5,8 @@ import {
   FaExclamationTriangle,
   FaServicestack,
   FaCodeBranch,
-  FaUsers
+  FaUsers,
+  FaUserCog
 } from "react-icons/fa";
 
 import { Link } from "react-router-dom";
@@ -44,10 +45,18 @@ const Sidebar = ({ isOpen }) => {
           </li>
         </Link>
 
-        <Link to="/engineers" className="menu-link">
+        <Link to="/fte-analysis" className="menu-link">
           <li className="menu-item">
             <FaUsers className="icon" />
             <span>FTE Analysis</span>
+          </li>
+        </Link>
+
+
+         <Link to="/engineers" className="menu-link">
+          <li className="menu-item">
+            <FaUserCog className="icon" />
+            <span>Engineers</span>
           </li>
         </Link>
 

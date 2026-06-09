@@ -5,12 +5,20 @@ body {
 
 /* CONTENT */
 .content {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
   padding: 20px;
-  transition: margin-left 0.3s ease;
+
+  transition:
+    margin-left 0.3s ease,
+    width 0.3s ease;
 }
 
 .content.shift {
   margin-left: 250px;
+  width: calc(100% - 250px);
 }
 
 /* OVERLAY */
@@ -18,13 +26,20 @@ body {
   position: fixed;
   top: 60px;
   left: 0;
+
   width: 100%;
   height: calc(100% - 60px);
+
   background: rgba(0, 0, 0, 0.3);
+
   z-index: 999;
 }
 
+/* MAIN CONTENT */
 .main-content {
-  margin-top: 60px;   /* push content below navbar */
+  margin-top: 60px;
   padding: 20px;
+
+  width: 100%;
+  box-sizing: border-box;
 }

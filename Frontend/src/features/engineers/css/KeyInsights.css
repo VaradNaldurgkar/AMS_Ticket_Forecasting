@@ -1,0 +1,157 @@
+.insights-card {
+  background: #fffdf7;
+  border: 1px solid #f3d98b;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.insights-card h3 {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* ==========================================
+   GRID
+========================================== */
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+}
+
+/* ==========================================
+   INSIGHT CARD
+========================================== */
+
+.insight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  background: #ffffff;
+
+  padding: 12px;
+
+  border-radius: 12px;
+
+  border: 1px solid #e5e7eb;
+
+  transition: all 0.2s ease;
+
+  min-height: 90px;
+}
+
+.insight-item:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+/* ==========================================
+   CONTENT
+========================================== */
+
+.insight-content {
+  flex: 1;
+}
+
+.insight-content h4 {
+  margin: 0 0 4px;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  color: #0f172a;
+
+  line-height: 1.3;
+}
+
+.insight-content p {
+  margin: 0;
+
+  font-size: 12px;
+
+  line-height: 1.4;
+
+  color: #475569;
+}
+
+.insight-content b {
+  color: #0f172a;
+
+  font-weight: 700;
+}
+
+/* ==========================================
+   ICON
+========================================== */
+
+.insight-icon {
+  width: 36px;
+  height: 36px;
+
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 16px;
+
+  flex-shrink: 0;
+}
+
+/* ==========================================
+   COLORS
+========================================== */
+
+.green {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.blue {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.purple {
+  background: #f3e8ff;
+  color: #9333ea;
+}
+
+.success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.orange {
+  background: #ffedd5;
+  color: #ea580c;
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 1400px) {
+  .insights-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .insights-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+}

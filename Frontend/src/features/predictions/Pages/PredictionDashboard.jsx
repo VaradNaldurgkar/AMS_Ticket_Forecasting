@@ -239,7 +239,7 @@ const PredictionDashboard = () => {
 
                 <div
                   className={`kpi-deviation ${
-                    isHigh ? "red" : "green"
+                    isHigh ? "kpi-red" : "kpi-green"
                   }`}
                 >
                   {isHigh ? "↓" : "↑"} {deviation}%
@@ -310,7 +310,7 @@ const PredictionDashboard = () => {
             </h4>
 
             <div className="change-item">
-              <span className="change-dot green"></span>
+            <span className="change-dot change-green"></span>
               Historical forecast evaluation stabilized.
             </div>
 
@@ -397,11 +397,11 @@ const PredictionDashboard = () => {
 
               </div>
 
-              <div className="forecast-change green">
+              <div className="forecast-change forecast-green">
                 + forecast
               </div>
 
-              <div className="forecast-trend green">
+              <div className="forecast-trend forecast-green">
                 ↑
               </div>
 

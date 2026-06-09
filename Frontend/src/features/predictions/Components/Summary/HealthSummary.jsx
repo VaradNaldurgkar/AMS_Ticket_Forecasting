@@ -101,7 +101,7 @@ const HealthSummary = ({ data }) => {
           Forecast Accuracy
         </h4>
 
-        <p className="value green">
+        <p className="value value-green">
           {accuracy}%
         </p>
 
@@ -118,7 +118,7 @@ const HealthSummary = ({ data }) => {
           Avg Error (4M)
         </h4>
 
-        <p className="value red">
+        <p className="value value-red">
           {avgError}
         </p>
 
@@ -135,7 +135,7 @@ const HealthSummary = ({ data }) => {
           Worst Month
         </h4>
 
-        <p className="value red">
+        <p className="value value-red">
           {worstMonth.month}
         </p>
 
@@ -152,7 +152,7 @@ const HealthSummary = ({ data }) => {
           Best Month
         </h4>
 
-        <p className="value green">
+        <p className="value value-green">
           {bestMonth.month}
         </p>
 

@@ -1,0 +1,229 @@
+.engineers-dashboard {
+  padding: 24px 28px;
+  background: #f8fafc;
+}
+
+/* =======================================================
+   HEADER
+======================================================= */
+
+.engineers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  margin-bottom: 24px;
+
+  padding-bottom: 18px;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* =======================================================
+   LEFT
+======================================================= */
+
+.header-left h1 {
+  font-family: "Inter", sans-serif;
+
+  font-size: 28px;
+
+  font-weight: 700;
+
+  letter-spacing: -0.5px;
+
+  color: #0f172a;
+
+  line-height: 1.2;
+
+  margin: 0;
+}
+
+.header-left p {
+  margin-top: 6px;
+
+  font-size: 15px;
+
+  color: #64748b;
+
+  line-height: 1.5;
+
+  max-width: 620px;
+}
+/* =======================================================
+   DATE FILTER
+======================================================= */
+
+.date-filter {
+  min-width: 300px;
+
+  background: white;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 22px;
+
+  padding: 20px 24px;
+
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  box-shadow:
+    0 6px 20px rgba(15,23,42,0.05);
+
+  transition: all 0.2s ease;
+}
+
+.date-filter:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 10px 28px rgba(15,23,42,0.08);
+}
+
+.calendar-icon {
+  width: 56px;
+  height: 56px;
+
+  border-radius: 18px;
+
+  background: #ede9fe;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 24px;
+}
+
+.date-filter h4 {
+  font-size: 15px;
+
+  color: #64748b;
+
+  margin-bottom: 6px;
+
+  font-weight: 600;
+}
+
+.date-filter p {
+  font-size: 17px;
+
+  font-weight: 700;
+
+  color: #0f172a;
+
+  margin: 0;
+}
+
+/* =======================================================
+   GRID
+======================================================= */
+
+.middle-grid {
+  margin-top: 28px;
+
+  display: grid;
+
+  grid-template-columns: 2fr 1fr;
+
+  gap: 28px;
+
+  align-items: start;
+}
+
+
+
+/* =======================================================
+   COMMON CARD
+======================================================= */
+
+.dashboard-card {
+  background: white;
+
+  border-radius: 24px;
+
+  padding: 28px;
+
+  border: 1px solid #edf0f5;
+
+  box-shadow:
+    0 4px 14px rgba(15,23,42,0.04);
+}
+
+/* =======================================================
+   CATEGORY SECTION
+======================================================= */
+
+.category-section {
+  margin-top: 8px;
+}
+
+/* =======================================================
+   RESPONSIVE
+======================================================= */
+
+@media (max-width: 1200px) {
+
+  .middle-grid,
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+@media (max-width: 992px) {
+
+  .engineers-header {
+    flex-direction: column;
+    align-items: flex-start;
+
+    gap: 24px;
+  }
+
+  .date-filter {
+    width: 100%;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .engineers-dashboard {
+    padding: 20px;
+  }
+
+  .header-left h1 {
+    font-size: 48px;
+  }
+
+  .header-left p {
+    font-size: 16px;
+  }
+
+}
+
+@media (max-width: 640px) {
+
+  .header-left h1 {
+    font-size: 38px;
+  }
+
+  .dashboard-card {
+    padding: 22px;
+  }
+
+}
+
+.fte-table-section {
+  margin-top: 28px;
+}
+
+.category-section {
+  margin-top: 20px;
+}
+
+.assumption-section {
+  margin-top: 20px;
+}
