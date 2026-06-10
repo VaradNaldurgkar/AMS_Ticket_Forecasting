@@ -100,7 +100,7 @@ const ForecastCalculation = () => {
 
         <h3>3. Forecast Horizon</h3>
 
-        <p>2027, 2028, 2029</p>
+        <p>2027</p>
 
       </div>
 

@@ -25,7 +25,7 @@ const EngineersDashboard = () => {
         </div>
 
         <div className="last-updated">
-          Last Updated: May 28, 2026
+          Last Updated: June 9, 2026
         </div>
       </div>
 

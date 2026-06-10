@@ -324,9 +324,7 @@ const PredictionDashboard = () => {
               Error margin: {kpis.mape}%.
             </div>
 
-            <button className="report-btn">
-              View Detailed Report →
-            </button>
+            
 
           </div>
 
