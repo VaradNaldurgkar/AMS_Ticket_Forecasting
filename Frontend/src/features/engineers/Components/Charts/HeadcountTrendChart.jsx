@@ -15,15 +15,17 @@ const data = [
   { year: "2024", headcount: 3500 },
   { year: "2025", headcount: 4656 },
   { year: "2026", headcount: 5100 },
-  { year: "2027(F)", headcount: 5100 }
+  { year: "2027 (F)", headcount: 5600 },
+  { year: "2028 (F)", headcount: 6100 }
 ];
 
 const HeadcountTrendChart = () => {
   return (
     <div className="chart-card">
+
       <h3>Total Headcount Trend</h3>
 
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={260}>
         <LineChart
           data={data}
           margin={{
@@ -33,6 +35,7 @@ const HeadcountTrendChart = () => {
             bottom: 10
           }}
         >
+
           <CartesianGrid
             stroke="#e5e7eb"
             strokeDasharray="3 3"
@@ -52,7 +55,7 @@ const HeadcountTrendChart = () => {
 
           <Tooltip
             formatter={(value) => [
-              value.toLocaleString(),
+              Number(value).toLocaleString(),
               "Headcount"
             ]}
           />
@@ -69,13 +72,14 @@ const HeadcountTrendChart = () => {
               dataKey="headcount"
               position="top"
               formatter={(value) =>
-                value.toLocaleString()
+                Number(value).toLocaleString()
               }
             />
           </Line>
 
         </LineChart>
       </ResponsiveContainer>
+
     </div>
   );
 };

@@ -15,15 +15,17 @@ const data = [
   { year: "2024", engineers: 26 },
   { year: "2025", engineers: 34 },
   { year: "2026", engineers: 38 },
-  { year: "2027(F)", engineers: 38 }
+  { year: "2027 (F)", engineers: 41 },
+  { year: "2028 (F)", engineers: 45 }
 ];
 
 const HiringTrendChart = () => {
   return (
     <div className="chart-card">
+
       <h3>External Engineers Hired Trend</h3>
 
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={260}>
         <BarChart
           data={data}
           margin={{
@@ -33,6 +35,7 @@ const HiringTrendChart = () => {
             bottom: 10
           }}
         >
+
           <CartesianGrid
             stroke="#e5e7eb"
             strokeDasharray="3 3"
@@ -67,6 +70,7 @@ const HiringTrendChart = () => {
 
         </BarChart>
       </ResponsiveContainer>
+
     </div>
   );
 };

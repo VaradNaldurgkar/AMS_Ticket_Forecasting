@@ -23,7 +23,7 @@ const ForecastCalculation = () => {
       {/* TABLE */}
       <div className="forecast-table-section">
 
-        <h4>Historical Hiring Ratio</h4>
+        <h4>Historical & Forecast Hiring Ratio</h4>
 
         <table className="ratio-table">
 
@@ -37,6 +37,7 @@ const ForecastCalculation = () => {
           </thead>
 
           <tbody>
+
             <tr>
               <td>2024</td>
               <td>26</td>
@@ -57,6 +58,22 @@ const ForecastCalculation = () => {
               <td>5,100</td>
               <td>0.75%</td>
             </tr>
+
+            {/* Forecast Years */}
+            <tr>
+              <td>2027</td>
+              <td>41</td>
+              <td>5,600</td>
+              <td>0.74%</td>
+            </tr>
+
+            <tr>
+              <td>2028</td>
+              <td>45</td>
+              <td>6,100</td>
+              <td>0.74%</td>
+            </tr>
+
           </tbody>
 
         </table>
@@ -67,7 +84,7 @@ const ForecastCalculation = () => {
       <div className="average-ratio-box">
 
         <span>
-          Average Hiring Ratio (2024–2026)
+          Average Hiring Ratio (2024–2028)
         </span>
 
         <h3>0.74%</h3>
@@ -80,19 +97,20 @@ const ForecastCalculation = () => {
         <h3>2. Forecast Logic</h3>
 
         <p>
-          Future Headcount is expected to remain stable at
-          5,100 (90% certainty).
+          Future Headcount is projected to increase by
+          approximately 500 employees per year.
         </p>
 
         <p>
-          Forecasted Engineers = Headcount × Avg Hiring Ratio
+          Forecasted Engineers = Headcount × Average Hiring Ratio
         </p>
 
       </div>
 
-      {/* FORMULA */}
+      {/* FORMULAS */}
       <div className="formula-box">
-        5,100 × 0.74% ≈ 38 Engineers
+        <p>2027: 5,600 × 0.74% ≈ 41 Engineers</p>
+        <p>2028: 6,100 × 0.74% ≈ 45 Engineers</p>
       </div>
 
       {/* HORIZON */}
@@ -100,7 +118,7 @@ const ForecastCalculation = () => {
 
         <h3>3. Forecast Horizon</h3>
 
-        <p>2027</p>
+        <p>2027 – 2028</p>
 
       </div>
 
@@ -110,9 +128,9 @@ const ForecastCalculation = () => {
         <h4>Key Assumptions</h4>
 
         <ul>
-          <li>Headcount remains around 5,100 from 2027 onwards.</li>
-          <li>Hiring ratio remains stable.</li>
-          <li>No major business strategy changes.</li>
+          <li>Headcount grows by approximately 500 employees per year.</li>
+          <li>Hiring ratio remains stable at around 0.74%.</li>
+          <li>No major business strategy or workforce planning changes.</li>
         </ul>
 
       </div>
@@ -124,7 +142,9 @@ const ForecastCalculation = () => {
 
         <p>HR / Organization Records</p>
 
-        <p>Years Considered: 2024 – 2026</p>
+        <p>Historical Years Considered: 2024 – 2026</p>
+
+        <p>Forecast Years: 2027 – 2028</p>
 
       </div>
 
