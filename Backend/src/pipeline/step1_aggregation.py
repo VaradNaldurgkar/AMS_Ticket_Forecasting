@@ -1,9 +1,8 @@
 import pandas as pd
-import glob
 import os
 
 # ========================================================
-# STEP 0: RESOLVE PROJECT ROOT & RAW DATA PATH
+# STEP 0: RESOLVE PROJECT PATHS
 # ========================================================
 
 BASE_DIR = os.path.dirname(
@@ -12,140 +11,151 @@ BASE_DIR = os.path.dirname(
     )
 )
 
-RAW_DIR = os.path.join(BASE_DIR, "data", "raw")
 PROCESSED_DIR = os.path.join(BASE_DIR, "data", "processed")
 
-# Load all IM and RR files
-im_files = glob.glob(os.path.join(RAW_DIR, "*IM*.xlsx"))
-rr_files = glob.glob(os.path.join(RAW_DIR, "*RR*.xlsx"))
+MASTER_PATH = os.path.join(
+    PROCESSED_DIR,
+    "AMS_Ticket_Master.csv"
+)
 
-if not im_files or not rr_files:
-    raise FileNotFoundError(f"IM or RR raw files not found in {RAW_DIR}")
-
-df_im = pd.concat([pd.read_excel(f) for f in im_files], ignore_index=True)
-df_rr = pd.concat([pd.read_excel(f) for f in rr_files], ignore_index=True)
+OUTPUT_PATH = os.path.join(
+    PROCESSED_DIR,
+    "AMS_Yearly_Aggregated.csv"
+)
 
 # ========================================================
-# STEP 1: CLEAN COLUMN NAMES
+# STEP 1: LOAD FILTERED MASTER DATA
 # ========================================================
 
-for df in (df_im, df_rr):
-    df.columns = (
-        df.columns
-        .str.replace("\n", " ", regex=False)
-        .str.strip()
+if not os.path.exists(MASTER_PATH):
+    raise FileNotFoundError(
+        f"AMS_Ticket_Master.csv not found:\n{MASTER_PATH}"
     )
 
-# ========================================================
-# STEP 2: STANDARDIZE RR COLUMN NAMES
-# ========================================================
+df = pd.read_csv(MASTER_PATH)
 
-df_rr = df_rr.rename(columns={
-    "Request ID": "Incident ID",
-    "Reported Time (Timezone based)": "Reported Date (Timezone based)",
-    "Complexity": "Priority"
-})
+print("\n✅ Loaded AMS_Ticket_Master.csv")
+print("✅ Records:", len(df))
 
 # ========================================================
-# STEP 3: ADD TICKET TYPE
+# STEP 2: DATE PROCESSING
 # ========================================================
 
-df_im["Ticket_Type"] = "Incident"
-df_rr["Ticket_Type"] = "Service Request"
-
-# ========================================================
-# STEP 4: SELECT REQUIRED COMMON COLUMNS
-# ========================================================
-
-required_columns = [
-    "Incident ID",
-    "Priority",
-    "Reported Date (Timezone based)",  # kept but not used
-    "Open Time (Timezone based)",
-    "CI Location",
-    "CI Location.1",
-    "Ticket_Type"
-]
-
-df_im = df_im[required_columns]
-df_rr = df_rr[required_columns]
-
-# ========================================================
-# STEP 5: COMBINE IM + RR DATA
-# ========================================================
-
-df = pd.concat([df_im, df_rr], ignore_index=True)
-
-# ========================================================
-# STEP 6: BASE DATE = OPEN TIME (STRICT) ✅
-# ========================================================
-
-df["Open_Date"] = pd.to_datetime(
-    df["Open Time (Timezone based)"],
+df["Reported_Date"] = pd.to_datetime(
+    df["Reported_Date"],
     errors="coerce"
 )
 
-# Drop invalid dates (Excel ignores these)
-df = df[df["Open_Date"].notna()]
+df = df[df["Reported_Date"].notna()]
+
+print(
+    "\nLatest date before filtering:",
+    df["Reported_Date"].max()
+)
 
 # ========================================================
-# STEP 7: FILTER DATE RANGE (2024 → MAR 2026) ✅
+# STEP 3: FILTER DATE RANGE
 # ========================================================
 
 df = df[
-    (df["Open_Date"] >= "2024-01-01") &
-    (df["Open_Date"] <= "2026-03-31")
+    (df["Reported_Date"] >= "2024-01-01") &
+    (df["Reported_Date"] <= "2026-04-30")
 ]
 
-# ========================================================
-# STEP 8: MONTH DERIVATION (FROM OPEN TIME) ✅
-# ========================================================
-
-df["Month"] = df["Open_Date"].dt.to_period("M").astype(str)
-
-# ========================================================
-# STEP 9: LOCATION DERIVATION
-# ========================================================
-
-df["Location"] = df["CI Location"]
-
-df["Location"] = df["Location"].where(
-    df["Location"].notna() & (df["Location"].astype(str).str.strip() != ""),
-    df["CI Location.1"]
-)
-
-df["Location"] = df["Location"].fillna("Unknown")
-
-# ========================================================
-# STEP 10: MONTHLY AGGREGATION
-# ========================================================
-
-monthly_df = df.groupby(["Month", "Location"], as_index=False).agg(
-    Total_Tickets=("Incident ID", "nunique"),
-
-    Incidents=("Incident ID", lambda x: x[
-        df.loc[x.index, "Ticket_Type"] == "Incident"
-    ].nunique()),
-
-    Service_Requests=("Incident ID", lambda x: x[
-        df.loc[x.index, "Ticket_Type"] == "Service Request"
-    ].nunique())
+print(
+    "Latest date after filtering:",
+    df["Reported_Date"].max()
 )
 
 # ========================================================
-# STEP 11: PRIORITY BREAKDOWN
+# STEP 4: MONTH DERIVATION
+# ========================================================
+
+df["Month"] = (
+    df["Reported_Date"]
+    .dt.to_period("M")
+    .astype(str)
+)
+
+# ========================================================
+# STEP 5: USE LOCATION FROM MASTER FILE
+# ========================================================
+
+if "Location" not in df.columns:
+    raise ValueError(
+        "Location column not found in AMS_Ticket_Master.csv. "
+        "Please regenerate AMS_Ticket_Master.csv using step2_ticket_master.py"
+    )
+
+df["Location"] = (
+    df["Location"]
+    .fillna("Unknown")
+    .astype(str)
+    .str.strip()
+)
+
+df["Location"] = df["Location"].replace(
+    "",
+    "Unknown"
+)
+
+print("\nLocation Distribution:")
+print(df["Location"].value_counts().head(20))
+
+print("\nTicket Type vs Location:")
+print(
+    pd.crosstab(
+        df["Ticket_Type"],
+        df["Location"]
+    )
+)
+
+# ========================================================
+# STEP 6: PRIORITY CLEANUP
+# ========================================================
+
+if "Priority" not in df.columns:
+    df["Priority"] = "Unknown"
+
+df["Priority"] = df["Priority"].fillna("Unknown")
+
+# ========================================================
+# STEP 7: MONTHLY AGGREGATION
+# ========================================================
+
+monthly_df = df.groupby(
+    ["Month", "Location"],
+    as_index=False
+).agg(
+    Total_Tickets=("Ticket_ID", "nunique"),
+
+    Incidents=(
+        "Ticket_Type",
+        lambda x: (x == "Incident").sum()
+    ),
+
+    Service_Requests=(
+        "Ticket_Type",
+        lambda x: (x == "Service Request").sum()
+    )
+)
+
+# ========================================================
+# STEP 8: PRIORITY BREAKDOWN
 # ========================================================
 
 priority_df = df.pivot_table(
     index=["Month", "Location"],
     columns="Priority",
-    values="Incident ID",
-    aggfunc="nunique",  # avoid duplicate inflation
+    values="Ticket_ID",
+    aggfunc="nunique",
     fill_value=0
 ).reset_index()
 
 priority_df.columns = [
-    f"P{int(col)}" if isinstance(col, (int, float)) else col
+    f"P{int(col)}"
+    if isinstance(col, (int, float))
+    else str(col)
     for col in priority_df.columns
 ]
 
@@ -156,14 +166,44 @@ monthly_df = monthly_df.merge(
 )
 
 # ========================================================
-# STEP 12: SAVE OUTPUT
+# STEP 9: SAVE OUTPUT
 # ========================================================
 
 os.makedirs(PROCESSED_DIR, exist_ok=True)
-output_path = os.path.join(PROCESSED_DIR, "AMS_Yearly_Aggregated.csv")
 
-monthly_df.to_csv(output_path, index=False)
+monthly_df.to_csv(
+    OUTPUT_PATH,
+    index=False
+)
+
+# ========================================================
+# STEP 10: VALIDATION
+# ========================================================
+
+print("\n========== AGGREGATION SUMMARY ==========")
+
+print(
+    "Date range:",
+    monthly_df["Month"].min(),
+    "to",
+    monthly_df["Month"].max()
+)
+
+print(
+    "Locations:",
+    monthly_df["Location"].nunique()
+)
+
+print(
+    "Rows:",
+    len(monthly_df)
+)
+
+print(
+    "\nSample:"
+)
+
+print(monthly_df.head())
 
 print("\n✅ Aggregation completed successfully")
-print("✅ Date range:", monthly_df["Month"].min(), "to", monthly_df["Month"].max())
-print(f"✅ Saved to: {output_path}")
+print(f"✅ Saved to: {OUTPUT_PATH}")

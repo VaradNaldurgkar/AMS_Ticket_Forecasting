@@ -1,9 +1,8 @@
 import pandas as pd
-import glob
 import os
 
 # ========================================================
-# STEP 0: PATH SETUP (SAME AS AGGREGATION)
+# STEP 0: PATH SETUP
 # ========================================================
 
 BASE_DIR = os.path.dirname(
@@ -12,85 +11,66 @@ BASE_DIR = os.path.dirname(
     )
 )
 
-RAW_DIR = os.path.join(BASE_DIR, "data", "raw")
 PROCESSED_DIR = os.path.join(BASE_DIR, "data", "processed")
 
-# ========================================================
-# STEP 1: LOAD ALL FILES (2024 + 2025 + 2026)
-# ========================================================
+INPUT_PATH = os.path.join(
+    PROCESSED_DIR,
+    "AMS_Ticket_Master.csv"
+)
 
-im_files = glob.glob(os.path.join(RAW_DIR, "*IM*.xlsx"))
-rr_files = glob.glob(os.path.join(RAW_DIR, "*RR*.xlsx"))
-
-if not im_files or not rr_files:
-    raise FileNotFoundError(f"IM or RR files not found in {RAW_DIR}")
-
-df_im = pd.concat([pd.read_excel(f) for f in im_files], ignore_index=True)
-df_rr = pd.concat([pd.read_excel(f) for f in rr_files], ignore_index=True)
+OUTPUT_PATH = os.path.join(
+    PROCESSED_DIR,
+    "Call_Code_Breakdown.csv"
+)
 
 # ========================================================
-# STEP 2: CLEAN COLUMN NAMES
+# STEP 1: LOAD FILTERED MASTER DATA
 # ========================================================
 
-for df in (df_im, df_rr):
-    df.columns = df.columns.str.replace("\n", " ", regex=False).str.strip()
+if not os.path.exists(INPUT_PATH):
+    raise FileNotFoundError(
+        f"AMS_Ticket_Master.csv not found: {INPUT_PATH}"
+    )
+
+df = pd.read_csv(INPUT_PATH)
+
+print("\n==================================================")
+print("AMS MASTER DATA LOADED")
+print("==================================================")
+
+print(f"Total Records Loaded: {len(df)}")
 
 # ========================================================
-# STEP 3: STANDARDIZE RR COLUMNS
+# STEP 2: DATE PROCESSING
 # ========================================================
 
-df_rr = df_rr.rename(columns={
-    "Request ID": "Incident ID",
-    "Reported Time (Timezone based)": "Reported Date (Timezone based)",
-    "Complexity": "Priority"
-})
-
-# ========================================================
-# STEP 4: ADD TYPE
-# ========================================================
-
-df_im["Ticket_Type"] = "Incident"
-df_rr["Ticket_Type"] = "Service Request"
-
-# ========================================================
-# STEP 5: SELECT REQUIRED COLUMNS (IMPORTANT: INCLUDE CALL CODE)
-# ========================================================
-
-required_columns = [
-    "Incident ID",
-    "Call Code",  # ✅ KEY COLUMN
-    "Open Time (Timezone based)",
-    "Ticket_Type"
-]
-
-df_im = df_im[required_columns]
-df_rr = df_rr[required_columns]
-
-# ========================================================
-# STEP 6: COMBINE DATA
-# ========================================================
-
-df = pd.concat([df_im, df_rr], ignore_index=True)
-
-# ========================================================
-# STEP 7: OPEN TIME FILTER (SAME LOGIC)
-# ========================================================
-
-df["Open_Date"] = pd.to_datetime(
-    df["Open Time (Timezone based)"],
+df["Reported_Date"] = pd.to_datetime(
+    df["Reported_Date"],
     errors="coerce"
 )
 
-df = df[df["Open_Date"].notna()]
+df = df[df["Reported_Date"].notna()]
 
 df = df[
-    (df["Open_Date"] >= "2024-01-01") &
-    (df["Open_Date"] <= "2026-03-31")
+    (df["Reported_Date"] >= "2024-01-01") &
+    (df["Reported_Date"] <= "2026-04-30")
 ]
 
+print(
+    "\nDate Range:",
+    df["Reported_Date"].min(),
+    "to",
+    df["Reported_Date"].max()
+)
+
 # ========================================================
-# STEP 8: CLEAN CALL CODE
+# STEP 3: CLEAN CALL CODE
 # ========================================================
+
+if "Call Code" not in df.columns:
+    raise ValueError(
+        "Call Code column not found in AMS_Ticket_Master.csv"
+    )
 
 df["Call Code"] = (
     df["Call Code"]
@@ -99,40 +79,97 @@ df["Call Code"] = (
     .str.strip()
 )
 
-# ========================================================
-# STEP 9: REMOVE DUPLICATES (VERY IMPORTANT)
-# ========================================================
-
-df = df.drop_duplicates(subset=["Incident ID"])
-
-# ========================================================
-# STEP 10: CALL CODE BREAKDOWN
-# ========================================================
-
-call_code_breakdown = (
-    df.groupby("Call Code")["Incident ID"]
-    .nunique()
-    .reset_index(name="Ticket_Count")
-    .sort_values("Ticket_Count", ascending=False)
+df["Call Code"] = df["Call Code"].replace(
+    "",
+    "Unknown"
 )
 
 # ========================================================
-# STEP 11: SAVE OUTPUT (TO PROCESSED FOLDER)
+# STEP 4: REMOVE DUPLICATE TICKETS
+# ========================================================
+
+before_duplicates = len(df)
+
+df = df.drop_duplicates(
+    subset=["Ticket_ID"]
+)
+
+after_duplicates = len(df)
+
+print(
+    f"\nDuplicates Removed: "
+    f"{before_duplicates - after_duplicates}"
+)
+
+# ========================================================
+# STEP 5: VALIDATION
+# ========================================================
+
+print("\nTicket Type Distribution:")
+print(
+    df["Ticket_Type"]
+    .value_counts()
+)
+
+print("\nResolve Group Distribution:")
+print(
+    df["Resolve Group"]
+    .value_counts()
+)
+
+# ========================================================
+# STEP 6: CALL CODE BREAKDOWN
+# ========================================================
+
+call_code_breakdown = (
+    df.groupby("Call Code")["Ticket_ID"]
+    .nunique()
+    .reset_index(name="Ticket_Count")
+    .sort_values(
+        by="Ticket_Count",
+        ascending=False
+    )
+)
+
+# ========================================================
+# STEP 7: ADD PERCENTAGE
+# ========================================================
+
+total_tickets = call_code_breakdown[
+    "Ticket_Count"
+].sum()
+
+call_code_breakdown["Percentage"] = (
+    call_code_breakdown["Ticket_Count"]
+    / total_tickets
+    * 100
+).round(2)
+
+call_code_breakdown = (
+    call_code_breakdown
+    .reset_index(drop=True)
+)
+
+# ========================================================
+# STEP 8: SAVE OUTPUT
 # ========================================================
 
 os.makedirs(PROCESSED_DIR, exist_ok=True)
 
-output_path = os.path.join(PROCESSED_DIR, "Call_Code_Breakdown.csv")
-
-call_code_breakdown.to_csv(output_path, index=False)
+call_code_breakdown.to_csv(
+    OUTPUT_PATH,
+    index=False
+)
 
 # ========================================================
-# STEP 12: LOGS
+# STEP 9: FINAL OUTPUT
 # ========================================================
 
-print("\n✅ Call Code bifurcation created successfully")
-print("✅ Date range: 2024-01 to 2026-03")
-print(f"✅ Saved to: {output_path}")
+print("\n==================================================")
+print("CALL CODE BIFURCATION CREATED")
+print("==================================================")
 
-print("\nPreview:")
+print(f"Saved To: {OUTPUT_PATH}")
+
+print("\nTop 10 Call Codes:\n")
 print(call_code_breakdown.head(10))

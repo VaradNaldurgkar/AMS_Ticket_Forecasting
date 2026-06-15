@@ -1,9 +1,8 @@
 import pandas as pd
-import glob
 import os
 
 # ========================================================
-# STEP 0: PATH SETUP (SAME AS AGGREGATION)
+# STEP 0: PATH SETUP
 # ========================================================
 
 BASE_DIR = os.path.dirname(
@@ -12,117 +11,127 @@ BASE_DIR = os.path.dirname(
     )
 )
 
-RAW_DIR = os.path.join(BASE_DIR, "data", "raw")
-PROCESSED_DIR = os.path.join(BASE_DIR, "data", "processed")
+PROCESSED_DIR = os.path.join(
+    BASE_DIR,
+    "data",
+    "processed"
+)
+
+INPUT_PATH = os.path.join(
+    PROCESSED_DIR,
+    "AMS_Ticket_Master.csv"
+)
+
+OUTPUT_PATH = os.path.join(
+    PROCESSED_DIR,
+    "Incident_Call_Code_Breakdown.csv"
+)
 
 # ========================================================
-# STEP 1: LOAD ALL FILES (2024 + 2025 + 2026)
+# STEP 1: LOAD FILTERED MASTER DATA
 # ========================================================
 
-im_files = glob.glob(os.path.join(RAW_DIR, "*IM*.xlsx"))
-rr_files = glob.glob(os.path.join(RAW_DIR, "*RR*.xlsx"))
+if not os.path.exists(INPUT_PATH):
+    raise FileNotFoundError(
+        f"AMS_Ticket_Master.csv not found:\n{INPUT_PATH}"
+    )
 
-if not im_files or not rr_files:
-    raise FileNotFoundError(f"IM or RR files not found in {RAW_DIR}")
+df = pd.read_csv(INPUT_PATH)
 
-df_im = pd.concat([pd.read_excel(f) for f in im_files], ignore_index=True)
-df_rr = pd.concat([pd.read_excel(f) for f in rr_files], ignore_index=True)
+print("\n==================================================")
+print("AMS MASTER DATA LOADED")
+print("==================================================")
 
-# ========================================================
-# STEP 2: CLEAN COLUMN NAMES
-# ========================================================
-
-for df in (df_im, df_rr):
-    df.columns = df.columns.str.replace("\n", " ", regex=False).str.strip()
+print(f"Total Records Loaded: {len(df)}")
 
 # ========================================================
-# STEP 3: STANDARDIZE RR COLUMNS
+# STEP 2: DATE FILTER
 # ========================================================
 
-df_rr = df_rr.rename(columns={
-    "Request ID": "Incident ID",
-    "Reported Time (Timezone based)": "Reported Date (Timezone based)",
-    "Complexity": "Priority"
-})
-
-# ========================================================
-# STEP 4: ADD TYPE
-# ========================================================
-
-df_im["Ticket_Type"] = "Incident"
-df_rr["Ticket_Type"] = "Service Request"
-
-# ========================================================
-# STEP 5: SELECT REQUIRED COLUMNS
-# ========================================================
-
-required_columns = [
-    "Incident ID",
-    "Call Code",
-    "Title",
-    "Open Time (Timezone based)",
-    "Ticket_Type"
-]
-
-df_im = df_im[required_columns]
-df_rr = df_rr[required_columns]
-
-# ========================================================
-# STEP 6: COMBINE DATA
-# ========================================================
-
-df = pd.concat([df_im, df_rr], ignore_index=True)
-
-# ========================================================
-# STEP 7: OPEN TIME FILTER (IMPORTANT)
-# ========================================================
-
-df["Open_Date"] = pd.to_datetime(
-    df["Open Time (Timezone based)"],
+df["Reported_Date"] = pd.to_datetime(
+    df["Reported_Date"],
     errors="coerce"
 )
 
-df = df[df["Open_Date"].notna()]
+df = df[df["Reported_Date"].notna()]
 
 df = df[
-    (df["Open_Date"] >= "2024-01-01") &
-    (df["Open_Date"] <= "2026-03-31")
+    (df["Reported_Date"] >= "2024-01-01") &
+    (df["Reported_Date"] <= "2026-04-30")
 ]
 
+print(
+    "\nDate Range:",
+    df["Reported_Date"].min(),
+    "to",
+    df["Reported_Date"].max()
+)
+
 # ========================================================
-# STEP 8: KEEP ONLY INCIDENTS
+# STEP 3: KEEP ONLY INCIDENTS
 # ========================================================
 
-df = df[df["Ticket_Type"] == "Incident"].copy()
+df = df[
+    df["Ticket_Type"] == "Incident"
+].copy()
+
+print(
+    "Incident Records:",
+    len(df)
+)
 
 # ========================================================
-# STEP 9: CLEAN TITLE + CATEGORY
+# STEP 4: CLEAN TITLE
 # ========================================================
 
-df["Title"] = df["Title"].fillna("").astype(str).str.lower()
+df["Title"] = (
+    df["Title"]
+    .fillna("")
+    .astype(str)
+    .str.lower()
+    .str.strip()
+)
 
+# ========================================================
+# STEP 5: INCIDENT CATEGORIZATION
+# ========================================================
 def normalize_incident(title):
     if "citrix" in title:
-        return "Citrix Issue"
+        return "Citrix"
     elif "laptop" in title:
-        return "Laptop Issue"
+        return "Laptop"
     elif "vpn" in title:
-        return "VPN Issue"
+        return "VPN"
     elif "headset" in title:
-        return "Headset Issue"
+        return "Headset"
     elif "teams" in title:
-        return "MS Teams Issue"
-    elif "internet" in title:
-        return "Internet Issue"
+        return "MS Teams"
+    elif "internet" in title or "wifi" in title or "wi-fi" in title:
+        return "Internet/WiFi"
     elif "access" in title:
-        return "Access Issue"
+        return "Access"
+    elif "outlook" in title:
+        return "Outlook"
+    elif (
+        "application" in title
+        or "software" in title
+        or "install" in title
+        or "uninstall" in title
+    ):
+        return "Application"
+    elif (
+        "authentication" in title
+        or "certificate" in title
+        or "pki" in title
+    ):
+        return "Security"
     else:
         return "Other"
-
+    
 df["Category"] = df["Title"].apply(normalize_incident)
 
 # ========================================================
-# STEP 10: CLEAN CALL CODE
+# STEP 6: CLEAN CALL CODE
 # ========================================================
 
 df["Call Code"] = (
@@ -132,24 +141,53 @@ df["Call Code"] = (
     .str.strip()
 )
 
+df["Call Code"] = df["Call Code"].replace(
+    "",
+    "Unknown"
+)
+
 # ========================================================
-# STEP 11: REMOVE DUPLICATES (CRITICAL)
+# STEP 7: REMOVE DUPLICATES
 # ========================================================
 
-df = df.drop_duplicates(subset=["Incident ID"])
+before_duplicates = len(df)
+
+df = df.drop_duplicates(
+    subset=["Ticket_ID"]
+)
+
+after_duplicates = len(df)
+
+print(
+    f"Duplicates Removed: "
+    f"{before_duplicates - after_duplicates}"
+)
 
 # ========================================================
-# STEP 12: COUNT INCIDENTS
+# STEP 8: VALIDATION
+# ========================================================
+
+print("\nResolve Group Distribution:")
+
+print(
+    df["Resolve Group"]
+    .value_counts()
+)
+
+# ========================================================
+# STEP 9: INCIDENT BREAKDOWN
 # ========================================================
 
 counts = (
-    df.groupby(["Call Code", "Category"])["Incident ID"]
+    df.groupby(
+        ["Call Code", "Category"]
+    )["Ticket_ID"]
     .nunique()
     .reset_index(name="Count")
 )
 
 # ========================================================
-# STEP 13: PERCENTAGE (WITHIN CATEGORY)
+# STEP 10: CATEGORY PERCENTAGE
 # ========================================================
 
 category_totals = (
@@ -158,36 +196,52 @@ category_totals = (
     .reset_index(name="Category_Total")
 )
 
-final_df = counts.merge(category_totals, on="Category")
+final_df = counts.merge(
+    category_totals,
+    on="Category"
+)
 
 final_df["Percentage"] = (
-    final_df["Count"] / final_df["Category_Total"] * 100
+    final_df["Count"]
+    / final_df["Category_Total"]
+    * 100
 ).round(2)
 
 final_df = final_df[
-    ["Call Code", "Category", "Count", "Percentage"]
+    [
+        "Call Code",
+        "Category",
+        "Count",
+        "Percentage"
+    ]
 ].sort_values(
     ["Category", "Count"],
     ascending=[True, False]
 )
 
 # ========================================================
-# STEP 14: SAVE OUTPUT
+# STEP 11: SAVE OUTPUT
 # ========================================================
 
-os.makedirs(PROCESSED_DIR, exist_ok=True)
+os.makedirs(
+    PROCESSED_DIR,
+    exist_ok=True
+)
 
-output_path = os.path.join(PROCESSED_DIR, "Incident_Call_Code_Breakdown.csv")
-
-final_df.to_csv(output_path, index=False)
+final_df.to_csv(
+    OUTPUT_PATH,
+    index=False
+)
 
 # ========================================================
-# STEP 15: LOGS
+# STEP 12: LOGS
 # ========================================================
 
-print("\n✅ Incident Call Code bifurcation created successfully")
-print("✅ Date range: 2024-01 to 2026-03")
-print(f"✅ Saved to: {output_path}")
+print("\n==================================================")
+print("INCIDENT CALL CODE BIFURCATION CREATED")
+print("==================================================")
 
-print("\nPreview:")
-print(final_df.head(10))
+print(f"Saved To: {OUTPUT_PATH}")
+
+print("\nPreview:\n")
+print(final_df.head(20))

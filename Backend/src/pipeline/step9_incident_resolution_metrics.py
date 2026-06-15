@@ -25,20 +25,38 @@ OUTPUT_PATH = os.path.join(
     "Incident_Resolution_Metrics.csv"
 )
 
+OUTPUT_MONTHLY_PATH = os.path.join(
+    BASE_DIR,
+    "data",
+    "processed",
+    "Incident_Resolution_Monthly.csv"
+)
+
 # ========================================================
 # LOAD DATA
 # ========================================================
 
 df = pd.read_csv(INPUT_PATH)
 
+
+print("\n==================================================")
+print("AMS MASTER DATA LOADED")
+print("==================================================")
+
+print(f"Total Records Loaded: {len(df)}")
+
 # ========================================================
 # KEEP ONLY INCIDENTS
 # ========================================================
 
 df = df[
-    df["Ticket_Type"] == "Incident"
+    (df["Ticket_Type"] == "Incident") &
+    (df["Location"] == "Pune")
 ].copy()
 
+print(
+    f"Pune Incident Records: {len(df)}"
+)
 # ========================================================
 # CLEAN IMPORTANT COLUMNS
 # ========================================================
@@ -48,6 +66,7 @@ df["Title"] = (
     .fillna("")
     .astype(str)
     .str.strip()
+    .str.lower()
 )
 
 # ========================================================
@@ -62,6 +81,30 @@ df["Open Time (Timezone based)"] = pd.to_datetime(
 df["Resolve Time (Timezone based)"] = pd.to_datetime(
     df["Resolve Time (Timezone based)"],
     errors="coerce"
+)
+
+
+TRAIN_START_DATE = "2024-01-01"
+
+df = df[
+    df["Open Time (Timezone based)"] >= TRAIN_START_DATE
+]
+
+# ========================================================
+# MONTH COLUMN
+# ========================================================
+
+df["Month"] = (
+    df["Open Time (Timezone based)"]
+    .dt.to_period("M")
+    .astype(str)
+)
+
+print(
+    "\nDate Range:",
+    df["Open Time (Timezone based)"].min(),
+    "to",
+    df["Open Time (Timezone based)"].max()
 )
 
 # ========================================================
@@ -97,10 +140,7 @@ df = df[
 # NORMALIZE INCIDENT CATEGORY
 # ========================================================
 
-df["Title_Lower"] = (
-    df["Title"]
-    .str.lower()
-)
+df["Title_Lower"] = df["Title"]
 
 # ========================================================
 # INCIDENT CLASSIFICATION
@@ -529,6 +569,17 @@ def normalize_incident(title):
 
     else:
         return "General / Uncategorized"
+    
+before_duplicates = len(df)
+
+df = df.drop_duplicates(
+    subset=["Ticket_ID"]
+)
+
+print(
+    f"Duplicates Removed: "
+    f"{before_duplicates - len(df)}"
+)
 
 # ========================================================
 # APPLY CLASSIFICATION
@@ -544,7 +595,7 @@ df["Incident_Type"] = (
 # ========================================================
 
 other_df = df[
-    df["Incident_Type"] == "Other"
+    df["Incident_Type"] == "General / Uncategorized"
 ]
 
 print("\n==============================")
@@ -587,21 +638,80 @@ final_df = (
     .reset_index()
 )
 
+
+# ========================================================
+# MONTHLY INCIDENT METRICS
+# ========================================================
+
+monthly_df = (
+
+    df.groupby(
+        ["Month", "Incident_Type"]
+    )
+
+    .agg(
+
+        Incident_Count=(
+            "Ticket_ID",
+            "count"
+        ),
+
+        Avg_Resolution_Hours=(
+            "Resolution_Hours",
+            "mean"
+        ),
+
+        Median_Resolution_Hours=(
+            "Resolution_Hours",
+            "median"
+        )
+
+    )
+
+    .reset_index()
+
+)
+
+monthly_df[
+    [
+        "Avg_Resolution_Hours",
+        "Median_Resolution_Hours"
+    ]
+] = monthly_df[
+    [
+        "Avg_Resolution_Hours",
+        "Median_Resolution_Hours"
+    ]
+].round(2)
+
+# ========================================================
+# ADD PERCENTAGE
+# ========================================================
+
+total_incidents = final_df["Incident_Count"].sum()
+
+final_df["Percentage"] = (
+    final_df["Incident_Count"]
+    / total_incidents
+    * 100
+)
+
 # ========================================================
 # ROUND VALUES
 # ========================================================
 
 numeric_columns = [
-
     "Avg_Resolution_Hours",
-    "Median_Resolution_Hours"
-
+    "Median_Resolution_Hours",
+    "Percentage"
 ]
 
 final_df[numeric_columns] = (
     final_df[numeric_columns]
     .round(2)
 )
+
+
 
 # ========================================================
 # SORT BY INCIDENT COUNT
@@ -612,6 +722,14 @@ final_df = final_df.sort_values(
     ascending=False
 )
 
+total_incidents = final_df["Incident_Count"].sum()
+
+final_df["Percentage"] = (
+    final_df["Incident_Count"]
+    / total_incidents
+    * 100
+).round(2)
+
 # ========================================================
 # SAVE CSV
 # ========================================================
@@ -621,6 +739,10 @@ final_df.to_csv(
     index=False
 )
 
+monthly_df.to_csv(
+    OUTPUT_MONTHLY_PATH,
+    index=False
+)
 # ========================================================
 # LOGS
 # ========================================================
@@ -631,6 +753,11 @@ print(
 
 print(
     f"✅ Saved to: {OUTPUT_PATH}"
+)
+
+print(
+    f"✅ Monthly Metrics Saved To: "
+    f"{OUTPUT_MONTHLY_PATH}"
 )
 
 print("\nPreview:\n")
