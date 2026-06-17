@@ -31,13 +31,17 @@ from api.routes import incident_dashboard
 
 from api.routes import forecast_evaluation
 
-# ✅ NEW IMPORT
 from api.routes.fte_analysis_route import (
     router as fte_router
 )
 
 from api.routes.requisition_route import (
     router as requisition_router
+)
+
+# ✅ NEW IMPORT
+from api.routes.uploads import (
+    router as uploads_router
 )
 
 # --------------------------------------------------
@@ -79,10 +83,12 @@ def actual_vs_predicted():
 
     return get_actual_vs_predicted()
 
+
 @app.get("/api/prediction/future")
 def future_forecast():
 
     return get_future_forecast()
+
 
 # --------------------------------------------------
 # FORECAST EVALUATION APIs
@@ -135,7 +141,7 @@ app.include_router(
 )
 
 # --------------------------------------------------
-# ✅ FTE ANALYSIS APIs
+# FTE ANALYSIS APIs
 # --------------------------------------------------
 
 app.include_router(
@@ -144,11 +150,24 @@ app.include_router(
     tags=["FTE Analysis"]
 )
 
+# --------------------------------------------------
+# REQUISITION APIs
+# --------------------------------------------------
 
 app.include_router(
     requisition_router,
     prefix="/api/requisition",
     tags=["Requisition"]
+)
+
+# --------------------------------------------------
+# UPLOAD EXCEL APIs
+# --------------------------------------------------
+
+app.include_router(
+    uploads_router,
+    prefix="/api",
+    tags=["Uploads"]
 )
 
 # --------------------------------------------------

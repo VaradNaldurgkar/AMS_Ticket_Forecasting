@@ -13,6 +13,8 @@ import FTE_Analysis from "./features/FTE_Analysis/Pages/FTE_Analysis";
 
 import EngineersDashboard from "./features/Engineers/Pages/EngineersDashboard";
 
+import AddExcel from "./features/predictions/Pages/AddExcel";
+
 function App() {
   return (
     <Layout>
@@ -51,6 +53,12 @@ function App() {
         <Route
           path="/engineers"
           element={<EngineersDashboard />}
+        />
+
+        {/* New Add Excel Page */}
+        <Route
+          path="/add-excel"
+          element={<AddExcel />}
         />
 
       </Routes>

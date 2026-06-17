@@ -16,19 +16,22 @@ const EngineerStats = ({ data }) => {
   // ======================================================
 
   const totalTickets = data.reduce(
-    (sum, item) => sum + item.tickets,
-    0
-  );
+  (sum, item) => sum + (item.tickets || 0),
+  0
+);
 
   // ======================================================
   // AVG ENGINEERS
   // ======================================================
 
   const avgEngineers =
-    data.reduce(
-      (sum, item) => sum + item.engineers,
-      0
-    ) / data.length;
+  data.length > 0
+    ? data.reduce(
+        (sum, item) =>
+          sum + (item.engineers || 0),
+        0
+      ) / data.length
+    : 0;
 
   // ======================================================
   // PEAK MONTH
@@ -94,9 +97,11 @@ const EngineerStats = ({ data }) => {
         </h2>
 
         <p>
-          {dominantCategory?.[1].toFixed(1)}%
-          workload share
-        </p>
+  {dominantCategory?.[1]
+    ? dominantCategory[1].toFixed(1)
+    : 0}
+  % workload share
+</p>
 
       </div>
 

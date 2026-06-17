@@ -23,6 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
+Backend/data/processed/~$Priority_Resolution_Summary.xlsx
 
 __pycache__/
 *.pyc

@@ -84,6 +84,9 @@ const EngineersDashboard = () => {
                 const fteData =
                   await fteResponse.json();
 
+                console.log("Tickets:", tickets);
+console.log("FTE API Response:", fteData);
+
                 return {
 
                   month:

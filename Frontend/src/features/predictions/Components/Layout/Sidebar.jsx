@@ -6,7 +6,8 @@ import {
   FaServicestack,
   FaCodeBranch,
   FaUsers,
-  FaUserCog
+  FaUserCog,
+  FaFileExcel
 } from "react-icons/fa";
 
 import { Link } from "react-router-dom";
@@ -14,7 +15,6 @@ import { Link } from "react-router-dom";
 const Sidebar = ({ isOpen }) => {
   return (
     <div className={`sidebar ${isOpen ? "open" : ""}`}>
-
       <ul className="sidebar-menu">
 
         <Link to="/predictions" className="menu-link">
@@ -52,16 +52,22 @@ const Sidebar = ({ isOpen }) => {
           </li>
         </Link>
 
-
-         <Link to="/engineers" className="menu-link">
+        <Link to="/engineers" className="menu-link">
           <li className="menu-item">
             <FaUserCog className="icon" />
             <span>Engineers</span>
           </li>
         </Link>
 
-      </ul>
+        {/* New Add Excel Menu */}
+        <Link to="/add-excel" className="menu-link">
+          <li className="menu-item">
+            <FaFileExcel className="icon" />
+            <span>Add Excel</span>
+          </li>
+        </Link>
 
+      </ul>
     </div>
   );
 };

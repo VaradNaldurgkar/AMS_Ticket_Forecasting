@@ -141,14 +141,14 @@ const FteAnalysisTable = ({
                   </td>
 
                   <td>
-                    {item.tickets.toLocaleString()}
-                  </td>
+  {(item.tickets ?? 0).toLocaleString()}
+</td>
 
                   <td>
-                    {Math.round(
-                      item.totalEffort
-                    ).toLocaleString()}
-                  </td>
+  {Math.round(
+    item.totalEffort ?? 0
+  ).toLocaleString()}
+</td>
 
                   <td>
                     {item.fte}
@@ -159,8 +159,8 @@ const FteAnalysisTable = ({
                   </td>
 
                   <td>
-                    {item.capacity.toLocaleString()}
-                  </td>
+  {(item.capacity ?? 0).toLocaleString()}
+</td>
 
                   <td>
 
@@ -193,8 +193,8 @@ const FteAnalysisTable = ({
                     <div className="utilization-cell">
 
                       <span>
-                        {item.utilization}%
-                      </span>
+  {item.utilization ?? 0}%
+</span>
 
                       <div className="progress-bar">
 
@@ -202,7 +202,7 @@ const FteAnalysisTable = ({
                           className="progress-fill"
                           style={{
                             width:
-                              `${item.utilization}%`
+  `${item.utilization ?? 0}%`
                           }}
                         />
 

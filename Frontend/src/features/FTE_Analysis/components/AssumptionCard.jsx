@@ -33,7 +33,7 @@ const AssumptionCard = () => {
           </span>
 
           <h3>
-            ARIMA
+            XGBoost Regression
           </h3>
 
           <p>
