@@ -12,34 +12,27 @@ BASE_DIR = os.path.dirname(
     )
 )
 
-RAW_DIR = os.path.join(BASE_DIR, "data", "raw")
+MASTER_DIR = os.path.join(BASE_DIR, "data", "Master")
 PROCESSED_DIR = os.path.join(BASE_DIR, "data", "processed")
+
 os.makedirs(PROCESSED_DIR, exist_ok=True)
 
 output_path = os.path.join(PROCESSED_DIR, "AMS_Ticket_Master.csv")
 
-# =========================================================
-# STEP 1: LOAD ALL RAW FILES (2024 + 2025)
-# =========================================================
+INCIDENT_MASTER = os.path.join(MASTER_DIR, "master_incidents.xlsx")
+REQUEST_MASTER = os.path.join(MASTER_DIR, "master_requests.xlsx")
 
-im_files = glob.glob(os.path.join(RAW_DIR, "*IM*.xlsx"))
-rr_files = glob.glob(os.path.join(RAW_DIR, "*RR*.xlsx"))
+if not os.path.exists(INCIDENT_MASTER):
+    raise FileNotFoundError("master_incidents.xlsx not found")
 
-if not im_files:
-    raise FileNotFoundError("No IM files found")
+if not os.path.exists(REQUEST_MASTER):
+    raise FileNotFoundError("master_requests.xlsx not found")
 
-if not rr_files:
-    raise FileNotFoundError("No RR files found")
+df_im = pd.read_excel(INCIDENT_MASTER)
+df_rr = pd.read_excel(REQUEST_MASTER)
 
-df_im = pd.concat(
-    [pd.read_excel(file) for file in im_files],
-    ignore_index=True
-)
-
-df_rr = pd.concat(
-    [pd.read_excel(file) for file in rr_files],
-    ignore_index=True
-)
+print("Loaded Incident Master:", len(df_im))
+print("Loaded Request Master:", len(df_rr))
 
 # =========================================================
 # STEP 2: CLEAN COLUMN NAMES
@@ -80,7 +73,6 @@ df_rr["Ticket_Type"] = "Service Request"
 
 incident_groups = [
     "AV/VC Support VW Group IT Solution",
-    "Antivirus Support VW Group IT Solution",
     "Asset Support VW Group IT Solution",
     "Service Desk VW Group IT Solution"
 ]
@@ -88,7 +80,8 @@ incident_groups = [
 service_request_groups = [
     "Service Desk VW Group IT Solution",
     "Asset Support VW Group IT Solution",
-    "Antivirus Support VW Group IT Solution"
+    "AV/VC Support VW Group IT Solution"
+    
 ]
 
 if "Resolve Group" not in df_im.columns:
@@ -218,11 +211,9 @@ print(
 # =========================================================
 
 TRAIN_START_DATE = "2024-01-01"
-TRAIN_END_DATE = "2026-04-30"
 
 df = df[
-    (df["Reported_Date"] >= TRAIN_START_DATE) &
-    (df["Reported_Date"] <= TRAIN_END_DATE)
+    df["Reported_Date"] >= TRAIN_START_DATE
 ]
 
 df["Month"] = (

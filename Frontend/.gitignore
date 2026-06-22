@@ -1,4 +1,6 @@
+# ==============================
 # Logs
+# ==============================
 logs
 *.log
 npm-debug.log*
@@ -7,15 +9,20 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# ==============================
+# Node / React
+# ==============================
+node_modules/
+dist/
+dist-ssr/
 *.local
 
+# ==============================
 # Editor directories and files
+# ==============================
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
@@ -23,7 +30,30 @@ dist-ssr
 *.sln
 *.sw?
 
-Backend/data/processed/~$Priority_Resolution_Summary.xlsx
-
+# ==============================
+# Python
+# ==============================
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+.env
+
+# ==============================
+# Backend Generated Data
+# ==============================
+Backend/data/raw/
+Backend/data/Master/
+Backend/data/processed/
+
+# Temporary Excel lock files
+~$*.xlsx
+~$*.xls
+
+# ==============================
+# Jupyter / ML
+# ==============================
+.ipynb_checkpoints/

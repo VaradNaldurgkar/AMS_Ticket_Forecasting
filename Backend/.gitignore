@@ -1,0 +1,27 @@
+# Logs
+logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Env
+.env
+venv/
+
+# Data folders
+data/raw/
+data/Master/
+data/processed/
+
+# Excel temp files
+~$*.xlsx
+~$*.xls
+
+# Node
+node_modules/
+dist/
+dist-ssr/

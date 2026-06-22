@@ -261,8 +261,30 @@ def get_actual_vs_predicted():
         objective       = "reg:squarederror",
         random_state    = 42,
     )
-    model.fit(train[feature_cols], train["Total_Tickets"])
-    xgb_predictions = model.predict(test[feature_cols])
+    model.fit(
+        train[feature_cols],
+        train["Total_Tickets"]
+    )
+
+    print("\n" + "=" * 60)
+    print("TOP FEATURE IMPORTANCE")
+    print("=" * 60)
+
+    importance_df = pd.DataFrame({
+        "feature": feature_cols,
+        "importance": model.feature_importances_
+    })
+
+    importance_df = importance_df.sort_values(
+        by="importance",
+        ascending=False
+    )
+
+    print(importance_df.head(20))
+
+    xgb_predictions = model.predict(
+        test[feature_cols]
+    )
 
     # ==================================================
     # SQRT TREND ESTIMATES  (pre-computed from all data)
@@ -273,6 +295,20 @@ def get_actual_vs_predicted():
         monthly[monthly["Month"] < "2026-01-01"]
     )
 
+    print("\n" + "=" * 60)
+    print("SQRT ESTIMATES FOR 2026")
+    print("=" * 60)
+
+    for ts in sorted(sqrt_estimates.keys()):
+
+        if ts.year == 2026:
+
+            print(
+                f"{ts.strftime('%b %Y')} : "
+                f"{round(sqrt_estimates[ts], 2)}"
+            )
+
+    print("=" * 60)
     # ==================================================
     # AVERAGE HISTORICAL YOY GROWTH (training months)
     # Used as the reference level in blend_xgb_with_sqrt.
