@@ -7,7 +7,6 @@ import TopServiceRequestsChart from "../components/TopServiceRequestsChart";
 import "../css/serviceDashboard.css";
 
 const ServiceDashboard = () => {
-
   const [dashboardData, setDashboardData] =
     useState(null);
 
@@ -23,33 +22,27 @@ const ServiceDashboard = () => {
   const [selectedType, setSelectedType] =
     useState("asset");
 
+  const [selectedYear, setSelectedYear] =
+    useState("all");
+
   // ======================================================
-  // LOAD DASHBOARD BASED ON DROPDOWN
+  // LOAD DASHBOARD BASED ON DROPDOWNS
   // ======================================================
 
   useEffect(() => {
-
     const loadDashboard = async () => {
-
       try {
-
         setLoading(true);
 
         const dashboardEndpoint =
-
           selectedType === "asset"
-
-            ? "http://127.0.0.1:8000/api/requisition/asset-dashboard"
-
-            : "http://127.0.0.1:8000/api/requisition/software-dashboard";
+            ? `http://127.0.0.1:8000/api/requisition/asset-dashboard?year=${selectedYear}`
+            : `http://127.0.0.1:8000/api/requisition/software-dashboard?year=${selectedYear}`;
 
         const chartEndpoint =
-
           selectedType === "asset"
-
-            ? "http://127.0.0.1:8000/api/requisition/asset-breakdown"
-
-            : "http://127.0.0.1:8000/api/requisition/software-breakdown";
+            ? `http://127.0.0.1:8000/api/requisition/asset-breakdown?year=${selectedYear}`
+            : `http://127.0.0.1:8000/api/requisition/software-breakdown?year=${selectedYear}`;
 
         const dashboardResponse =
           await fetch(dashboardEndpoint);
@@ -63,18 +56,11 @@ const ServiceDashboard = () => {
         const chartJson =
           await chartResponse.json();
 
-        setDashboardData(
-          dashboardJson
-        );
-
-        setTopRequestData(
-          chartJson
-        );
+        setDashboardData(dashboardJson);
+        setTopRequestData(chartJson);
 
         setLoading(false);
-
       } catch (err) {
-
         console.error(err);
 
         setError(
@@ -82,33 +68,25 @@ const ServiceDashboard = () => {
         );
 
         setLoading(false);
-
       }
-
     };
 
     loadDashboard();
 
-  }, [selectedType]);
+  }, [selectedType, selectedYear]);
 
   // ======================================================
   // LOADING
   // ======================================================
 
   if (loading) {
-
     return (
-
       <div className="service-dashboard">
-
         <h2>
           Loading Dashboard...
         </h2>
-
       </div>
-
     );
-
   }
 
   // ======================================================
@@ -116,17 +94,11 @@ const ServiceDashboard = () => {
   // ======================================================
 
   if (error) {
-
     return (
-
       <div className="service-dashboard">
-
         <h2>{error}</h2>
-
       </div>
-
     );
-
   }
 
   // ======================================================
@@ -134,12 +106,11 @@ const ServiceDashboard = () => {
   // ======================================================
 
   const summaryData = [
-
     {
       title: "Total Requests",
 
       value:
-        dashboardData.total_requests.toLocaleString(),
+        dashboardData.total_requests?.toLocaleString() || 0,
 
       subtitle:
         selectedType === "asset"
@@ -154,10 +125,10 @@ const ServiceDashboard = () => {
           : "Top Requested Software",
 
       value:
-        dashboardData.top_count.toLocaleString(),
+        dashboardData.top_count?.toLocaleString() || 0,
 
       subtitle:
-        dashboardData.top_item,
+        dashboardData.top_item || "-",
     },
 
     {
@@ -165,12 +136,11 @@ const ServiceDashboard = () => {
         "Total Categories",
 
       value:
-        dashboardData.total_categories.toLocaleString(),
+        dashboardData.total_categories?.toLocaleString() || 0,
 
       subtitle:
         "Available Categories",
     },
-
   ];
 
   // ======================================================
@@ -178,7 +148,6 @@ const ServiceDashboard = () => {
   // ======================================================
 
   return (
-
     <div className="service-dashboard">
 
       {/* HEADER */}
@@ -193,9 +162,11 @@ const ServiceDashboard = () => {
           Overview of service request bifurcation
         </p>
 
-        {/* PROFESSIONAL FILTER */}
+        {/* FILTERS */}
 
         <div className="dashboard-filter">
+
+          {/* Request Type */}
 
           <span className="filter-label">
             Request Type
@@ -210,7 +181,6 @@ const ServiceDashboard = () => {
               )
             }
           >
-
             <option value="asset">
               IT Asset Requisition
             </option>
@@ -218,30 +188,52 @@ const ServiceDashboard = () => {
             <option value="software">
               Software Requisition
             </option>
+          </select>
 
+          {/* Year */}
+
+          <span className="filter-label">
+            Year
+          </span>
+
+          <select
+            className="filter-select"
+            value={selectedYear}
+            onChange={(e) =>
+              setSelectedYear(
+                e.target.value
+              )
+            }
+          >
+            <option value="all">
+              All
+            </option>
+
+            <option value="2025">
+              2025
+            </option>
+
+            <option value="2026">
+              2026
+            </option>
           </select>
 
         </div>
-
       </div>
 
       {/* SUMMARY CARDS */}
 
       <div className="summary-grid">
-
         {summaryData.map(
           (card, index) => (
-
             <SummaryCard
               key={index}
               title={card.title}
               value={card.value}
               subtitle={card.subtitle}
             />
-
           )
         )}
-
       </div>
 
       {/* CHARTS */}
@@ -250,7 +242,7 @@ const ServiceDashboard = () => {
 
         <CallCodePieChart
           data={
-            dashboardData.pie_chart_data
+            dashboardData.pie_chart_data || []
           }
           selectedType={
             selectedType
@@ -267,9 +259,7 @@ const ServiceDashboard = () => {
       </div>
 
     </div>
-
   );
-
 };
 
 export default ServiceDashboard;

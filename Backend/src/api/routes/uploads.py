@@ -34,7 +34,15 @@ SOFTWARE_SCRIPT = PIPELINE_FOLDER / "software_requisition.py"
 # --------------------------------------------------
 
 def append_to_master(uploaded_file_path, master_file_path):
+
+    print("\n========== APPEND DEBUG ==========")
+    print("Uploaded path:", uploaded_file_path)
+    print("Master path:", master_file_path)
+
     new_df = pd.read_excel(uploaded_file_path, dtype=str)
+
+    print("Uploaded rows:", len(new_df))
+    print("Uploaded columns:", list(new_df.columns))
 
     new_df.columns = [
         str(col).replace("\n", " ").strip()
@@ -43,6 +51,8 @@ def append_to_master(uploaded_file_path, master_file_path):
 
     if master_file_path.exists():
         old_df = pd.read_excel(master_file_path, dtype=str)
+
+        print("Old master rows:", len(old_df))
 
         old_df.columns = [
             str(col).replace("\n", " ").strip()
@@ -58,6 +68,10 @@ def append_to_master(uploaded_file_path, master_file_path):
 
     before_count = len(combined_df)
 
+    # --------------------------------------------------
+    # DEDUPLICATION BASED ON UNIQUE KEYS
+    # --------------------------------------------------
+
     if "Incident ID" in combined_df.columns:
         combined_df = combined_df.drop_duplicates(
             subset=["Incident ID"]
@@ -68,12 +82,26 @@ def append_to_master(uploaded_file_path, master_file_path):
             subset=["Request ID"]
         )
 
+    elif "RITM No" in combined_df.columns:
+        combined_df = combined_df.drop_duplicates(
+            subset=["RITM No"]
+        )
+
+    elif "RITM" in combined_df.columns:
+        combined_df = combined_df.drop_duplicates(
+            subset=["RITM"]
+        )
+
     after_count = len(combined_df)
 
+    print("Rows before dedupe:", before_count)
+    print("Rows after dedupe:", after_count)
     print(f"Duplicates removed: {before_count - after_count}")
     print(f"Final rows in master: {after_count}")
 
     combined_df.to_excel(master_file_path, index=False)
+
+    print("Saved successfully to:", master_file_path)
 
 
 # --------------------------------------------------
@@ -87,29 +115,17 @@ async def upload_excel(
 ):
 
     if upload_type not in ["ams", "asset", "software"]:
-        return {
-            "success": False,
-            "message": "Invalid upload type"
-        }
+        return {"success": False, "message": "Invalid upload type"}
 
     if upload_type == "ams" and len(files) != 2:
-        return {
-            "success": False,
-            "message": "AMS requires exactly 2 files"
-        }
+        return {"success": False, "message": "AMS requires exactly 2 files"}
 
     if upload_type in ["asset", "software"] and len(files) != 1:
-        return {
-            "success": False,
-            "message": "Only 1 file allowed"
-        }
+        return {"success": False, "message": "Only 1 file allowed"}
 
     saved_paths = []
 
-    # --------------------------------------------------
-    # SAVE FILES TO RAW
-    # --------------------------------------------------
-
+    # SAVE FILES
     for file in files:
 
         if not file.filename.endswith((".xlsx", ".xls")):
@@ -118,12 +134,13 @@ async def upload_excel(
                 "message": "Only Excel files allowed"
             }
 
-        # Fixed filenames for asset/software
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
         if upload_type == "asset":
-            file_path = RAW_FOLDER / "u_it_asset_report.xlsx"
+            file_path = RAW_FOLDER / f"asset_{timestamp}_{file.filename}"
 
         elif upload_type == "software":
-            file_path = RAW_FOLDER / "u_vwits_u_software_requisition_report.xlsx"
+            file_path = RAW_FOLDER / f"software_{timestamp}_{file.filename}"
 
         else:
             file_path = RAW_FOLDER / file.filename
@@ -134,10 +151,10 @@ async def upload_excel(
         saved_paths.append(file_path)
 
     try:
-        # --------------------------------------------------
-        # AMS
-        # --------------------------------------------------
 
+        # ==================================================
+        # AMS
+        # ==================================================
         if upload_type == "ams":
 
             incident_master = MASTER_FOLDER / "master_incidents.xlsx"
@@ -166,39 +183,46 @@ async def upload_excel(
                     }
 
             print("Running AMS pipeline...")
-
             subprocess.run(["python", str(AMS_SCRIPT)], check=True)
             subprocess.run(["python", str(AGG_SCRIPT)], check=True)
 
-        # --------------------------------------------------
+        # ==================================================
         # ASSET
-        # --------------------------------------------------
-
+        # ==================================================
         elif upload_type == "asset":
 
             asset_master = MASTER_FOLDER / "master_assets.xlsx"
+
+            print("Asset master path:", asset_master.resolve())
+
             append_to_master(saved_paths[0], asset_master)
 
             print("Running Asset pipeline...")
-            subprocess.run(
-                ["python", str(ASSET_SCRIPT)],
-                check=True
-            )
+            subprocess.run(["python", str(ASSET_SCRIPT)], check=True)
 
-        # --------------------------------------------------
+        # ==================================================
         # SOFTWARE
-        # --------------------------------------------------
-
+        # ==================================================
         elif upload_type == "software":
 
             software_master = MASTER_FOLDER / "master_software.xlsx"
+
+            print("Software master path:", software_master.resolve())
+            print("Saved paths:", saved_paths)
+
             append_to_master(saved_paths[0], software_master)
+
+            verify_df = pd.read_excel(software_master)
+            print("Rows immediately after append:", len(verify_df))
 
             print("Running Software pipeline...")
             subprocess.run(
                 ["python", str(SOFTWARE_SCRIPT)],
                 check=True
             )
+
+            verify_df_after = pd.read_excel(software_master)
+            print("Rows after pipeline:", len(verify_df_after))
 
         return {
             "success": True,

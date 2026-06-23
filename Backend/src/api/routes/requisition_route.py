@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from api.services.requisition_service import (
     get_asset_breakdown,
@@ -13,42 +13,41 @@ router = APIRouter()
 # ASSET BREAKDOWN
 # ======================================================
 
-@router.get(
-    "/asset-breakdown"
-)
-def asset_breakdown():
+@router.get("/asset-breakdown")
+def asset_breakdown(
+    year: str = Query("all")
+):
+    return get_asset_breakdown(year)
 
-    return get_asset_breakdown()
 
 # ======================================================
 # SOFTWARE BREAKDOWN
 # ======================================================
 
-@router.get(
-    "/software-breakdown"
-)
-def software_breakdown():
+@router.get("/software-breakdown")
+def software_breakdown(
+    year: str = Query("all")
+):
+    return get_software_breakdown(year)
 
-    return get_software_breakdown()
 
 # ======================================================
 # ASSET DASHBOARD
 # ======================================================
 
-@router.get(
-    "/asset-dashboard"
-)
-def asset_dashboard():
+@router.get("/asset-dashboard")
+def asset_dashboard(
+    year: str = Query("all")
+):
+    return get_asset_dashboard(year)
 
-    return get_asset_dashboard()
 
 # ======================================================
 # SOFTWARE DASHBOARD
 # ======================================================
 
-@router.get(
-    "/software-dashboard"
-)
-def software_dashboard():
-
-    return get_software_dashboard()
+@router.get("/software-dashboard")
+def software_dashboard(
+    year: str = Query("all")
+):
+    return get_software_dashboard(year)
