@@ -311,5 +311,4 @@ Requires:
 # Author
 
 **Varad Naldurgkar**
-BTech Computer Science
 AMS Ticket Forecasting Project

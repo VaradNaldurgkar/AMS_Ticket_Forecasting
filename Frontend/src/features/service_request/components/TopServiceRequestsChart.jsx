@@ -1,7 +1,7 @@
 import {
   BarChart,
   Bar,
-  XAxis,
+ XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
@@ -12,6 +12,10 @@ const TopServiceRequestsChart = ({
   data,
   selectedType,
 }) => {
+
+  // Only top 10 records
+  const chartData = data.slice(0, 10);
+
   return (
     <div className="chart-card">
 
@@ -25,9 +29,8 @@ const TopServiceRequestsChart = ({
         width="100%"
         height={320}
       >
-
         <BarChart
-          data={data}
+          data={chartData}
           layout="vertical"
           margin={{
             top: 10,
@@ -68,7 +71,6 @@ const TopServiceRequestsChart = ({
           />
 
         </BarChart>
-
       </ResponsiveContainer>
 
     </div>

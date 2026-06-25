@@ -15,9 +15,15 @@ router = APIRouter()
 
 @router.get("/asset-breakdown")
 def asset_breakdown(
-    year: str = Query("all")
+    year: str = Query("all"),
+    start_date: str = Query(None),
+    end_date: str = Query(None)
 ):
-    return get_asset_breakdown(year)
+    return get_asset_breakdown(
+        year,
+        start_date,
+        end_date
+    )
 
 
 # ======================================================
@@ -26,9 +32,15 @@ def asset_breakdown(
 
 @router.get("/software-breakdown")
 def software_breakdown(
-    year: str = Query("all")
+    year: str = Query("all"),
+    start_date: str = Query(None),
+    end_date: str = Query(None)
 ):
-    return get_software_breakdown(year)
+    return get_software_breakdown(
+        year,
+        start_date,
+        end_date
+    )
 
 
 # ======================================================
@@ -37,9 +49,15 @@ def software_breakdown(
 
 @router.get("/asset-dashboard")
 def asset_dashboard(
-    year: str = Query("all")
+    year: str = Query("all"),
+    start_date: str = Query(None),
+    end_date: str = Query(None)
 ):
-    return get_asset_dashboard(year)
+    return get_asset_dashboard(
+        year,
+        start_date,
+        end_date
+    )
 
 
 # ======================================================
@@ -48,6 +66,12 @@ def asset_dashboard(
 
 @router.get("/software-dashboard")
 def software_dashboard(
-    year: str = Query("all")
+    year: str = Query("all"),
+    start_date: str = Query(None),
+    end_date: str = Query(None)
 ):
-    return get_software_dashboard(year)
+    return get_software_dashboard(
+        year,
+        start_date,
+        end_date
+    )
