@@ -1,3 +1,7 @@
+.fte-summary {
+  height: 100%;
+}
+
 .fte-summary h2 {
   font-size: 28px;
   font-weight: 700;
@@ -16,12 +20,16 @@
   border-radius: 50%;
   margin: 0 auto;
 
-  background:
-    conic-gradient(
-      #10b981 0% 33.33%,
-      #2563eb 33.33% 66.66%,
-      #9333ea 66.66% 100%
-    );
+  background: conic-gradient(
+    #10b981 0% 12.5%,
+    #2563eb 12.5% 25%,
+    #9333ea 25% 37.5%,
+    #f59e0b 37.5% 50%,
+    #ef4444 50% 62.5%,
+    #06b6d4 62.5% 75%,
+    #84cc16 75% 87.5%,
+    #ec4899 87.5% 100%
+  );
 
   display: flex;
   align-items: center;
@@ -41,22 +49,30 @@
 }
 
 .donut-center h1 {
-  font-size: 42px;
+  font-size: 40px;
   font-weight: 700;
 }
 
 .donut-center p {
   color: #6b7280;
+  font-size: 14px;
+  text-align: center;
 }
 
 .summary-list {
-  margin-top: 34px;
+  margin-top: 30px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .summary-item {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 18px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .left {
@@ -65,22 +81,21 @@
   gap: 10px;
 }
 
+.right {
+  font-weight: 600;
+}
+
 .dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
 }
 
-.dot-0 {
-  background: #10b981;
-}
-
-.dot-1 {
-  background: #2563eb;
-}
-
-.dot-2 {
-  background: #9333ea;
-}
-
-/* REMOVED dot-3 completely */
+.dot-0 { background: #10b981; }
+.dot-1 { background: #2563eb; }
+.dot-2 { background: #9333ea; }
+.dot-3 { background: #f59e0b; }
+.dot-4 { background: #ef4444; }
+.dot-5 { background: #06b6d4; }
+.dot-6 { background: #84cc16; }
+.dot-7 { background: #ec4899; }

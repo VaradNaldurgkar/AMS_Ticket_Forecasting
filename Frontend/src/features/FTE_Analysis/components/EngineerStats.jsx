@@ -12,33 +12,50 @@ import {
 const EngineerStats = ({ data }) => {
 
   // ======================================================
-  // TOTAL TICKETS
+  // TOTAL FORECASTED TICKETS (ONLY NEXT 3 MONTHS)
   // ======================================================
 
-  const totalTickets = data.reduce(
-  (sum, item) => sum + (item.tickets || 0),
-  0
-);
+  const forecastMonths = ["Jun 2026", "Jul 2026", "Aug 2026"];
+
+  const totalForecastTickets = data
+    .filter(item => forecastMonths.includes(item.month))
+    .reduce(
+      (sum, item) => sum + (item.tickets || 0),
+      0
+    );
 
   // ======================================================
-  // AVG ENGINEERS
+  // AVG PRODUCTIVITY CAPACITY
   // ======================================================
 
-  const avgEngineers =
-  data.length > 0
-    ? data.reduce(
-        (sum, item) =>
-          sum + (item.engineers || 0),
-        0
-      ) / data.length
-    : 0;
+  const avgProductivity =
+    data.length > 0
+      ? data[0]?.avgProductivity || 98.2
+      : 98.2;
 
   // ======================================================
-  // PEAK MONTH
+  // AVG PRODUCTIVITY INCREASE
+  // ======================================================
+
+  const avgProductivityIncrease =
+    data.length > 0
+      ? (
+          data.reduce(
+            (sum, item) =>
+              sum + (item.productivityIncreaseNeeded || 0),
+            0
+          ) / data.length
+        ).toFixed(1)
+      : 0;
+
+  // ======================================================
+  // PEAK LOAD MONTH
   // ======================================================
 
   const peakMonth = [...data].sort(
-    (a, b) => b.engineers - a.engineers
+    (a, b) =>
+      (b.productivityIncreaseNeeded || 0) -
+      (a.productivityIncreaseNeeded || 0)
   )[0];
 
   // ======================================================
@@ -52,21 +69,22 @@ const EngineerStats = ({ data }) => {
     monthData.workloadBreakdown?.forEach(
       (item) => {
 
-        const category =
-          item.category;
+        const category = item.category;
 
         if (!categoryMap[category]) {
-
           categoryMap[category] = 0;
-
         }
 
-        categoryMap[category] +=
-          item.distribution_percentage;
+        categoryMap[category] += item.distribution_percentage;
 
       }
     );
 
+  });
+
+  Object.keys(categoryMap).forEach(category => {
+    categoryMap[category] =
+      categoryMap[category] / data.length;
   });
 
   const dominantCategory =
@@ -83,7 +101,6 @@ const EngineerStats = ({ data }) => {
     <div className="stats-grid">
 
       {/* DOMINANT CATEGORY */}
-
       <div className="stat-card">
 
         <div className="stat-icon blue">
@@ -97,34 +114,32 @@ const EngineerStats = ({ data }) => {
         </h2>
 
         <p>
-  {dominantCategory?.[1]
-    ? dominantCategory[1].toFixed(1)
-    : 0}
-  % workload share
-</p>
+          {dominantCategory?.[1]
+            ? dominantCategory[1].toFixed(1)
+            : 0}
+          % workload share
+        </p>
 
       </div>
 
-      {/* PRODUCTIVE CAPACITY */}
-
+      {/* AVG PRODUCTIVITY CAPACITY */}
       <div className="stat-card">
 
         <div className="stat-icon green">
           <FaChartLine />
         </div>
 
-        <h4>Productive Capacity</h4>
+        <h4>Avg Productivity Capacity</h4>
 
-        <h2>7,400</h2>
+        <h2>{avgProductivity}</h2>
 
         <p>
-          mins / engineer / month
+          tickets / engineer / month
         </p>
 
       </div>
 
       {/* TOTAL FORECASTED TICKETS */}
-
       <div className="stat-card">
 
         <div className="stat-icon purple">
@@ -134,47 +149,45 @@ const EngineerStats = ({ data }) => {
         <h4>Total Forecasted Tickets</h4>
 
         <h2>
-          {totalTickets.toLocaleString()}
+          {totalForecastTickets.toLocaleString()}
         </h2>
 
         <p>Next 3 months</p>
 
       </div>
 
-      {/* AVG FTE */}
-
+      {/* AVG PRODUCTIVITY INCREASE */}
       <div className="stat-card">
 
         <div className="stat-icon orange">
           <FaUsers />
         </div>
 
-        <h4>Avg FTE Required</h4>
+        <h4>Avg Productivity Increase</h4>
 
         <h2>
-          {Math.round(avgEngineers)}
+          {avgProductivityIncrease}%
         </h2>
 
-        <p>Engineers</p>
+        <p>Across Jan–Aug 2026</p>
 
       </div>
 
-      {/* PEAK MONTH */}
-
+      {/* PEAK LOAD MONTH */}
       <div className="stat-card">
 
         <div className="stat-icon pink">
           <FaCalendarAlt />
         </div>
 
-        <h4>Peak Month</h4>
+        <h4>Peak Load Month</h4>
 
         <h2>
           {peakMonth?.month}
         </h2>
 
         <p>
-          {peakMonth?.engineers} Engineers
+          {peakMonth?.productivityIncreaseNeeded}% increase needed
         </p>
 
       </div>

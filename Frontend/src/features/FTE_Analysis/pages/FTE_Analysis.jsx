@@ -6,7 +6,6 @@ import EngineerStats from "../components/EngineerStats";
 import WorkforceOverview from "../components/WorkforceOverview";
 import FteSummary from "../components/FteSummary";
 import FteAnalysisTable from "../components/FteAnalysisTable";
-import AssumptionCard from "../components/AssumptionCard";
 import CategoryBreakdownModal from "../components/CategoryBreakdownModal";
 
 const EngineersDashboard = () => {
@@ -23,19 +22,32 @@ const EngineersDashboard = () => {
   const [isModalOpen, setIsModalOpen] =
     useState(false);
 
-  // ======================================================
-  // FETCH FORECAST + FTE ANALYSIS
-  // ======================================================
-
   useEffect(() => {
 
     const fetchDashboardData = async () => {
 
       try {
 
-        // ------------------------------------------------
-        // FETCH MONTHLY FORECAST
-        // ------------------------------------------------
+        // ==========================================
+        // FETCH HISTORICAL DATA (JAN-MAY 2026)
+        // ==========================================
+
+        const historicalResponse =
+          await fetch(
+            "http://127.0.0.1:8000/api/fte/historical-pune"
+          );
+
+        const historicalJson =
+          await historicalResponse.json();
+
+        const historicalData =
+          historicalJson.data || [];
+
+        console.log("Historical Data:", historicalData);
+
+        // ==========================================
+        // FETCH FORECAST DATA (JUN-AUG 2026)
+        // ==========================================
 
         const forecastResponse =
           await fetch(
@@ -51,30 +63,44 @@ const EngineersDashboard = () => {
             : forecastJson.data;
 
         if (!Array.isArray(forecastData)) {
-
-          console.error(
-            "Invalid forecast response"
-          );
-
+          console.error("Invalid forecast response");
           return;
-
         }
 
-        // ------------------------------------------------
-        // FETCH FTE ANALYSIS FOR EACH MONTH
-        // ------------------------------------------------
+        const formattedForecastData =
+          forecastData.map((row) => ({
+            month: row.month,
+            tickets:
+              row?.predicted ??
+              row?.tickets ??
+              row?.forecast ??
+              0
+          }));
+
+        console.log("Forecast Data:", formattedForecastData);
+
+        // ==========================================
+        // COMBINE ALL MONTHS
+        // ==========================================
+
+        const allMonths = [
+          ...historicalData,
+          ...formattedForecastData
+        ];
+
+        console.log("All Months:", allMonths);
+
+        // ==========================================
+        // FTE CALCULATIONS
+        // ==========================================
 
         const dashboardData =
           await Promise.all(
 
-            forecastData.map(
+            allMonths.map(
               async (row) => {
 
-                const tickets =
-                  row?.predicted ??
-                  row?.tickets ??
-                  row?.forecast ??
-                  0;
+                const tickets = row.tickets;
 
                 const fteResponse =
                   await fetch(
@@ -84,8 +110,12 @@ const EngineersDashboard = () => {
                 const fteData =
                   await fteResponse.json();
 
+                console.log("=================================");
+                console.log("Month:", row.month);
                 console.log("Tickets:", tickets);
-console.log("FTE API Response:", fteData);
+                console.log("FULL FTE DATA:", fteData);
+                console.log("productivity_gap:", fteData.productivity_gap);
+                console.log("=================================");
 
                 return {
 
@@ -109,6 +139,30 @@ console.log("FTE API Response:", fteData);
                   utilization:
                     fteData.utilization,
 
+                  availableEngineers:
+                    fteData.available_engineers,
+
+                  avgProductivity:
+                    fteData.avg_productivity,
+
+                  monthlyCapacity:
+                    fteData.monthly_capacity,
+
+                  requiredTicketsPerEngineer:
+                    fteData.required_tickets_per_engineer,
+
+                  engineerGap:
+                    fteData.engineer_gap,
+
+                  ticketGap:
+                    fteData.ticket_gap,
+
+                  productivityIncreaseNeeded:
+                    fteData.productivity_increase_needed,
+
+                  productivityGap:
+                    fteData.productivity_gap,
+
                   prioritySummary:
                     fteData.priority_summary,
 
@@ -120,6 +174,8 @@ console.log("FTE API Response:", fteData);
               }
             )
           );
+
+        console.log("FINAL dashboardData:", dashboardData);
 
         setProcessedData(
           dashboardData
@@ -144,13 +200,11 @@ console.log("FTE API Response:", fteData);
 
   }, []);
 
-  // ======================================================
-  // MODAL HANDLERS
-  // ======================================================
-
   const handleViewBreakdown = (
     month
   ) => {
+
+    console.log("Clicked Month:", month);
 
     setSelectedMonth(
       month
@@ -164,41 +218,22 @@ console.log("FTE API Response:", fteData);
 
   const closeModal = () => {
 
-    setSelectedMonth(
-      null
-    );
-
-    setIsModalOpen(
-      false
-    );
+    setSelectedMonth(null);
+    setIsModalOpen(false);
 
   };
-
-  // ======================================================
-  // LOADING STATE
-  // ======================================================
 
   if (loading) {
 
     return (
-
       <div className="engineers-dashboard">
-
         <div className="loading-state">
-
           Loading workforce analytics...
-
         </div>
-
       </div>
-
     );
 
   }
-
-  // ======================================================
-  // SELECTED MONTH DATA
-  // ======================================================
 
   const selectedMonthData =
     processedData.find(
@@ -206,15 +241,12 @@ console.log("FTE API Response:", fteData);
         item.month === selectedMonth
     );
 
-  // ======================================================
-  // UI
-  // ======================================================
+  console.log("selectedMonth:", selectedMonth);
+  console.log("selectedMonthData:", selectedMonthData);
 
   return (
 
     <div className="engineers-dashboard">
-
-      {/* HEADER */}
 
       <div className="engineers-header">
 
@@ -230,69 +262,32 @@ console.log("FTE API Response:", fteData);
 
       </div>
 
-      {/* TOP STATS */}
-
-      <EngineerStats
-        data={processedData}
-      />
-
-      {/* MIDDLE SECTION */}
+      <EngineerStats data={processedData} />
 
       <div className="middle-grid">
 
-        <WorkforceOverview
-          data={processedData}
-        />
-
-        <FteSummary
-          data={processedData}
-        />
+        <WorkforceOverview data={processedData} />
+        <FteSummary data={processedData} />
 
       </div>
-
-      {/* FTE TABLE */}
 
       <div className="fte-table-section">
 
         <FteAnalysisTable
           data={processedData}
-          onViewBreakdown={
-            handleViewBreakdown
-          }
+          onViewBreakdown={handleViewBreakdown}
         />
 
       </div>
 
-      {/* BREAKDOWN MODAL */}
-
       <CategoryBreakdownModal
-
-        isOpen={
-          isModalOpen
-        }
-
-        month={
-          selectedMonth
-        }
-
-        data={
-          selectedMonthData
-            ?.workloadBreakdown || []
-        }
-
-        onClose={
-          closeModal
-        }
-
+        isOpen={isModalOpen}
+        month={selectedMonth}
+        workforceData={selectedMonthData}
+        onClose={closeModal}
       />
 
-      {/* ASSUMPTION CARD */}
-
-      <div className="assumption-section">
-
-        <AssumptionCard />
-
-      </div>
+      
 
     </div>
 
