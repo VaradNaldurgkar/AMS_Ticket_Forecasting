@@ -35,6 +35,39 @@ const CategoryBreakdownModal = ({
   const productivityGap =
     workforceData?.productivityGap ?? 0;
 
+  // ======================================================
+// CAPACITY PLANNING VIEW
+// ======================================================
+
+const STANDARD_PRODUCTIVITY = 150;
+
+const teamCapacity =
+  engineers * STANDARD_PRODUCTIVITY;
+
+const requiredEngineers =
+  Math.ceil(
+    tickets / STANDARD_PRODUCTIVITY
+  );
+
+const engineerGap =
+  engineers - requiredEngineers;
+
+const capacityUtilization =
+  (
+    (tickets / teamCapacity) *
+    100
+  ).toFixed(1);
+
+const hiringStatus =
+  engineerGap >= 0
+    ? "Sufficient Workforce"
+    : "Additional Hiring Required";
+
+const recommendation =
+  engineerGap >= 0
+    ? `${engineerGap} engineer(s) can be allocated to other AMS activities.`
+    : `${Math.abs(engineerGap)} additional engineer(s) should be assigned to maintain SLA.`;
+
   // DEBUG LOGS
   console.log("MODAL workforceData:", workforceData);
   console.log("MODAL productivityGap:", productivityGap);
@@ -168,6 +201,141 @@ const CategoryBreakdownModal = ({
 
           </div>
 
+          {/* ======================================================
+    CAPACITY PLANNING VIEW
+====================================================== */}
+
+<div className="analysis-section">
+
+  <h3>Capacity Planning View</h3>
+
+  <table className="metrics-table">
+
+    <thead>
+
+      <tr>
+        <th>Metric</th>
+        <th>Value</th>
+        <th>Formula</th>
+        <th>Explanation</th>
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      <tr>
+        <td>Available Engineers</td>
+        <td>{engineers}</td>
+        <td>Current Team</td>
+        <td>Total engineers currently assigned.</td>
+      </tr>
+
+      <tr>
+        <td>Standard Productivity</td>
+        <td>{STANDARD_PRODUCTIVITY}</td>
+        <td>Company Standard</td>
+        <td>Expected tickets resolved per engineer every month.</td>
+      </tr>
+
+      <tr>
+        <td>Maximum Team Capacity</td>
+        <td>{teamCapacity}</td>
+        <td>
+          {engineers} × {STANDARD_PRODUCTIVITY} = {teamCapacity}
+        </td>
+        <td>
+          Maximum tickets that can be resolved with the current team.
+        </td>
+      </tr>
+
+      <tr>
+        <td>Forecasted Tickets</td>
+        <td>{tickets}</td>
+        <td>ML Forecast</td>
+        <td>Predicted ticket volume for {month}.</td>
+      </tr>
+
+      <tr>
+        <td>Required Engineers</td>
+        <td>{requiredEngineers}</td>
+        <td>
+          ceil({tickets} / {STANDARD_PRODUCTIVITY}) = {requiredEngineers}
+        </td>
+        <td>
+          Engineers required if each engineer resolves 150 tickets.
+        </td>
+      </tr>
+
+      <tr>
+        <td>Engineer Gap</td>
+        <td
+          style={{
+            color:
+              engineerGap >= 0
+                ? "#16a34a"
+                : "#dc2626",
+            fontWeight: 700
+          }}
+        >
+          {engineerGap >= 0
+            ? `+${engineerGap}`
+            : engineerGap}
+        </td>
+
+        <td>
+          {engineers} - {requiredEngineers} = {engineerGap}
+        </td>
+
+        <td>
+          {engineerGap >= 0
+            ? "Positive value indicates surplus engineers."
+            : "Negative value indicates additional engineers are required."}
+        </td>
+      </tr>
+
+      <tr>
+        <td>Capacity Utilization</td>
+
+        <td>{capacityUtilization}%</td>
+
+        <td>
+          ({tickets} / {teamCapacity}) × 100
+        </td>
+
+        <td>
+          Percentage of total workforce capacity utilized.
+        </td>
+      </tr>
+
+      <tr>
+        <td>Workforce Status</td>
+
+        <td
+          style={{
+            color:
+              engineerGap >= 0
+                ? "#16a34a"
+                : "#dc2626",
+            fontWeight: 700
+          }}
+        >
+          {hiringStatus}
+        </td>
+
+        <td>Based on Engineer Gap</td>
+
+        <td>
+          Overall staffing recommendation.
+        </td>
+      </tr>
+
+    </tbody>
+
+  </table>
+
+</div>
+
           {/* Recommendations */}
           <div className="analysis-section">
 
@@ -200,23 +368,6 @@ const CategoryBreakdownModal = ({
                 </tr>
               </tbody>
             </table>
-
-          </div>
-
-          {/* Risk */}
-          <div className="analysis-section">
-
-            <h3>Risk Assessment</h3>
-
-            <div className="risk-card">
-              <div className={`risk-badge ${riskLevel.toLowerCase()}`}>
-                {riskLevel}
-              </div>
-
-              <p>
-                Current productivity levels may not fully meet projected workload demand.
-              </p>
-            </div>
 
           </div>
 

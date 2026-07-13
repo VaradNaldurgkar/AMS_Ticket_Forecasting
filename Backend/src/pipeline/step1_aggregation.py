@@ -57,9 +57,10 @@ print(
 # STEP 3: FILTER DATE RANGE
 # ========================================================
 
+START_DATE = pd.Timestamp("2024-01-01")
+
 df = df[
-    (df["Reported_Date"] >= "2024-01-01") &
-    (df["Reported_Date"] <= "2026-04-30")
+    df["Reported_Date"] >= START_DATE
 ]
 
 print(
