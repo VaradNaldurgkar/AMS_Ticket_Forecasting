@@ -13,12 +13,16 @@ MASTER_FOLDER.mkdir(parents=True, exist_ok=True)
 
 INCIDENT_MASTER = MASTER_FOLDER / "master_incidents.csv"
 REQUEST_MASTER = MASTER_FOLDER / "master_requests.csv"
+ASSET_MASTER = MASTER_FOLDER / "master_assets.csv"
+SOFTWARE_MASTER = MASTER_FOLDER / "master_software.csv"
 
 print("\n================ PATH DEBUG ================")
 print("BASE_DIR          :", BASE_DIR)
 print("MASTER_FOLDER     :", MASTER_FOLDER)
 print("INCIDENT_MASTER   :", INCIDENT_MASTER)
 print("REQUEST_MASTER    :", REQUEST_MASTER)
+print("ASSET_MASTER      :", ASSET_MASTER)
+print("SOFTWARE_MASTER   :", SOFTWARE_MASTER)
 print("============================================\n")
 
 # ============================================================
@@ -576,6 +580,114 @@ def append_request_master(upload_file):
 
     return {
         "type": "request",
+        "uploaded": len(upload_df),
+        "new": new_count,
+        "duplicates": duplicate_count,
+        "total": len(updated_master)
+    }
+
+# ============================================================
+# READ ASSET REPORT
+# ============================================================
+
+def read_asset_report(upload_file):
+
+    print("\nReading Asset Report :", upload_file.name)
+
+    df = pd.read_excel(
+        upload_file,
+        sheet_name="Page 1",
+        header=0,
+        dtype=str
+    )
+
+    df = clean_columns(df)
+    df = normalize_strings(df)
+
+    return df
+
+
+# ============================================================
+# ASSET MASTER
+# ============================================================
+
+def append_asset_master(upload_file):
+
+    print("\n" + "=" * 80)
+    print("PROCESSING ASSET FILE")
+    print("=" * 80)
+
+    upload_df = read_asset_report(upload_file)
+
+    master_df = load_master(ASSET_MASTER)
+
+    updated_master, new_count, duplicate_count = append_records(
+        master_df,
+        upload_df,
+        "RITM"
+    )
+
+    save_master(
+        updated_master,
+        ASSET_MASTER
+    )
+
+    print("\n========== ASSET SUMMARY ==========")
+    print(f"Existing Master : {len(master_df)}")
+    print(f"Uploaded Rows   : {len(upload_df)}")
+    print(f"New Rows        : {new_count}")
+    print(f"Duplicates      : {duplicate_count}")
+    print(f"Final Master    : {len(updated_master)}")
+
+    return {
+        "type": "asset",
+        "uploaded": len(upload_df),
+        "new": new_count,
+        "duplicates": duplicate_count,
+        "total": len(updated_master)
+    }
+
+
+def read_software_report(upload_file):
+
+    print("\nReading Software Report:", upload_file.name)
+
+    df = pd.read_excel(
+        upload_file,
+        sheet_name="Page 1",
+        header=0,
+        dtype=str
+    )
+
+    df = clean_columns(df)
+    df = normalize_strings(df)
+
+    return df
+
+
+def append_software_master(upload_file):
+
+    print("\n" + "="*80)
+    print("PROCESSING SOFTWARE FILE")
+    print("="*80)
+
+    upload_df = read_software_report(upload_file)
+
+    master_df = load_master(SOFTWARE_MASTER)
+
+    updated_master, new_count, duplicate_count = append_records(
+        master_df,
+        upload_df,
+        "RITM No"
+    )
+
+    save_master(
+        updated_master,
+        SOFTWARE_MASTER
+    )
+
+    return {
+        "type": "software",
         "uploaded": len(upload_df),
         "new": new_count,
         "duplicates": duplicate_count,

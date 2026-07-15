@@ -9,7 +9,9 @@ import traceback
 from api.services.uploads_service import (
     get_report_type,
     append_incident_master,
-    append_request_master
+    append_request_master,
+    append_asset_master,
+    append_software_master
 )
 
 router = APIRouter()
@@ -36,33 +38,23 @@ SOFTWARE_SCRIPT = PIPELINE_FOLDER / "software_requisition.py"
 
 @router.post("/upload-excel")
 async def upload_excel(
-
     upload_type: str = Form(...),
-
     files: List[UploadFile] = File(...)
-
 ):
 
-    if upload_type not in [
-        "ams",
-        "asset",
-        "software"
-    ]:
-
+    if upload_type not in ["ams", "asset", "software"]:
         return {
             "success": False,
             "message": "Invalid Upload Type"
         }
 
     if upload_type == "ams" and len(files) != 2:
-
         return {
             "success": False,
             "message": "Please upload exactly one Incident file and one Request file."
         }
 
     if upload_type in ["asset", "software"] and len(files) != 1:
-
         return {
             "success": False,
             "message": "Only one file allowed."
@@ -113,15 +105,12 @@ async def upload_excel(
                 print(f"File            : {file.name}")
 
                 if report == "incident":
-
                     incident_summary = append_incident_master(file)
 
                 elif report == "request":
-
                     request_summary = append_request_master(file)
 
                 else:
-
                     return {
                         "success": False,
                         "message": f"Unknown report format : {file.name}"
@@ -164,22 +153,23 @@ async def upload_excel(
             )
 
             return {
-
                 "success": True,
-
                 "message": "AMS Upload Successful",
-
                 "incident": incident_summary,
-
                 "request": request_summary
-
             }
 
         # =====================================================
         # ASSET
         # =====================================================
 
-        if upload_type == "asset":
+        elif upload_type == "asset":
+
+            asset_summary = append_asset_master(saved_paths[0])
+
+            print("\n======================================")
+            print("Running Asset Dashboard Pipeline")
+            print("======================================")
 
             subprocess.run(
                 [
@@ -190,48 +180,50 @@ async def upload_excel(
             )
 
             return {
-
                 "success": True,
-
-                "message": "Asset uploaded successfully."
-
+                "message": "Asset uploaded successfully.",
+                "asset": asset_summary
             }
 
         # =====================================================
         # SOFTWARE
         # =====================================================
 
-        subprocess.run(
-            [
-                "python",
-                str(SOFTWARE_SCRIPT)
-            ],
-            check=True
-        )
+        elif upload_type == "software":
 
-        return {
+            software_summary = append_software_master(saved_paths[0])
 
-            "success": True,
+            print("\n======================================")
+            print("Running Software Dashboard Pipeline")
+            print("======================================")
 
-            "message": "Software uploaded successfully."
+            subprocess.run(
+                [
+                    "python",
+                    str(SOFTWARE_SCRIPT)
+                ],
+                check=True
+            )
 
-        }
+            return {
+                "success": True,
+                "message": "Software uploaded successfully.",
+                "software": software_summary
+            }
 
     except Exception as e:
 
-     import traceback
+        print("\n========== FULL ERROR ==========")
+        traceback.print_exc()
+        print("===============================\n")
 
-     print("\n========== FULL ERROR ==========")
-     traceback.print_exc()
-     print("===============================\n")
-
-     return {
-        "success": False,
-        "message": str(e)
-     }
+        return {
+            "success": False,
+            "message": str(e)
+        }
 
 
-        # =====================================================
+# =====================================================
 # GET UPLOADED FILES
 # =====================================================
 
@@ -247,22 +239,16 @@ def get_uploaded_files():
             stat = file.stat()
 
             files.append({
-
                 "file_name": file.name,
-
                 "size_mb": round(
                     stat.st_size / (1024 * 1024),
                     2
                 ),
-
                 "upload_date": datetime.fromtimestamp(
                     stat.st_mtime
                 ).strftime("%d %b %Y"),
-
                 "timestamp": stat.st_mtime,
-
                 "status": "Success"
-
             })
 
     files.sort(

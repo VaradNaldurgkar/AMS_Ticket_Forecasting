@@ -2,108 +2,144 @@ import pandas as pd
 import os
 import re
 
-# -----------------------------
-# Dynamic Paths
-# -----------------------------
-base_dir = os.path.dirname(os.path.abspath(__file__))
+# =====================================================
+# PATHS
+# =====================================================
 
-software_file = os.path.join(
-    base_dir, "..", "..", "data", "Master",
-    "master_software.xlsx"
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+BASE_DIR = os.path.abspath(
+    os.path.join(
+        CURRENT_DIR,
+        "..",
+        "..",
+        "data"
+    )
 )
 
-output_file = os.path.join(
-    base_dir, "..", "..", "data", "processed",
+MASTER_FILE = os.path.join(
+    BASE_DIR,
+    "Master",
+    "master_software.csv"
+)
+
+OUTPUT_FILE = os.path.join(
+    BASE_DIR,
+    "processed",
     "Software_Category_Count.csv"
 )
 
-software_file = os.path.normpath(software_file)
-output_file = os.path.normpath(output_file)
+print("\n========================================")
+print("SOFTWARE REQUISITION PIPELINE")
+print("========================================")
+print("Master File :", MASTER_FILE)
+print("Output File :", OUTPUT_FILE)
+print("========================================")
 
-# Debug
-print("Software file:", software_file)
-print("Exists?", os.path.exists(software_file))
+# =====================================================
+# LOAD MASTER CSV
+# =====================================================
 
-# -----------------------------
-# Load Data
-# -----------------------------
-df = pd.read_excel(software_file, engine="openpyxl")
+if not os.path.exists(MASTER_FILE):
+    raise FileNotFoundError(
+        f"Master Software CSV not found:\n{MASTER_FILE}"
+    )
 
-print("\n========== DATE DEBUG ==========")
-print("Raw Created head:")
-print(df["Created"].head(10))
-
-print("\nRaw Created tail:")
-print(df["Created"].tail(10))
-
-# -----------------------------
-# Date Parsing
-# -----------------------------
-df["Created"] = pd.to_datetime(
-    df["Created"],
-    errors="coerce",
-    dayfirst=True
+df = pd.read_csv(
+    MASTER_FILE,
+    dtype=str,
+    low_memory=False
 )
 
-print("\n========== PARSED DATE DEBUG ==========")
-print("Invalid dates:", df["Created"].isna().sum())
+print("\nRows Loaded :", len(df))
 
-print("\nYear distribution after parsing:")
-print(df["Created"].dt.year.value_counts(dropna=False))
+# =====================================================
+# DATE PARSING
+# =====================================================
 
-df["Year"] = df["Created"].dt.year
+df["Created"] = pd.to_datetime(
+    df["Created"],
+    errors="coerce"
+)
 
-# Remove rows with invalid year
-df = df[df["Year"].notna()]
-df["Year"] = df["Year"].astype(int)
+df = df[df["Created"].notna()].copy()
 
-# -----------------------------
-# Clean + Extract software names
-# -----------------------------
+df["Year"] = df["Created"].dt.year.astype(int)
+
+print("\n========== YEAR DISTRIBUTION ==========")
+print(df["Year"].value_counts().sort_index())
+
+# =====================================================
+# SOFTWARE EXTRACTION
+# =====================================================
+
 def extract_software(text):
+
     if pd.isna(text):
         return []
 
-    matches = re.findall(r"Software Name:\s*([^,]+)", str(text))
+    matches = re.findall(
+        r"Software Name:\s*([^,]+)",
+        str(text)
+    )
 
     cleaned = []
 
     for m in matches:
+
         name = m.strip()
 
-        # Remove unwanted parts
-        name = re.split(r"Version:", name)[0].strip()
-        name = re.split(r"Rejected By", name)[0].strip()
+        name = re.split(
+            r"Version:",
+            name
+        )[0].strip()
 
-        name_lower = name.lower()
+        name = re.split(
+            r"Rejected By",
+            name
+        )[0].strip()
 
-        # Standardization rules
-        if "sap" in name_lower:
+        lower = name.lower()
+
+        if "sap" in lower:
             name = "SAP"
-        elif "citrix" in name_lower:
+
+        elif "citrix" in lower:
             name = "Citrix"
-        elif "docker" in name_lower:
+
+        elif "docker" in lower:
             name = "Docker Desktop"
-        elif "copilot" in name_lower:
+
+        elif "copilot" in lower:
             name = "GitHub Copilot"
-        elif "python" in name_lower:
+
+        elif "python" in lower:
             name = "Python"
-        elif "node" in name_lower:
+
+        elif "node" in lower:
             name = "Node.js"
-        elif "git" in name_lower and "github" not in name_lower:
+
+        elif "git" in lower and "github" not in lower:
             name = "Git"
-        elif "visual studio code" in name_lower or "vs code" in name_lower:
+
+        elif "visual studio code" in lower or "vs code" in lower:
             name = "VS Code"
-        elif "intellij" in name_lower:
+
+        elif "intellij" in lower:
             name = "IntelliJ IDEA"
-        elif "postman" in name_lower:
+
+        elif "postman" in lower:
             name = "Postman"
-        elif "sql" in name_lower:
+
+        elif "sql" in lower:
             name = "SQL Tool"
-        elif "java" in name_lower or "jdk" in name_lower:
+
+        elif "java" in lower or "jdk" in lower:
             name = "JDK"
-        elif "workspace" in name_lower or "web client" in name_lower:
+
+        elif "workspace" in lower or "web client" in lower:
             name = "Citrix"
+
         else:
             name = name.title().strip()
 
@@ -111,85 +147,163 @@ def extract_software(text):
 
     return cleaned
 
+# =====================================================
+# APPROVED SOFTWARE
+# =====================================================
 
-# -----------------------------
-# Approved Software Processing
-# -----------------------------
 approved_records = []
 
 for _, row in df.iterrows():
-    year = row["Year"]
-    softwares = extract_software(row["Approved software List"])
+
+    softwares = extract_software(
+        row.get("Approved software List", "")
+    )
 
     for software in softwares:
+
         approved_records.append({
-            "Year": year,
+
+            "Year": row["Year"],
+
             "Software": software
+
         })
 
-approved_df = pd.DataFrame(approved_records)
-
-approved_count = (
-    approved_df
-    .groupby(["Year", "Software"])
-    .size()
-    .reset_index(name="Approved Count")
+approved_df = pd.DataFrame(
+    approved_records
 )
 
-# -----------------------------
-# Rejected Software Processing
-# -----------------------------
+if len(approved_df):
+
+    approved_count = (
+
+        approved_df
+
+        .groupby(
+            ["Year", "Software"]
+        )
+
+        .size()
+
+        .reset_index(name="Approved Count")
+
+    )
+
+else:
+
+    approved_count = pd.DataFrame(
+        columns=[
+            "Year",
+            "Software",
+            "Approved Count"
+        ]
+    )
+
+# =====================================================
+# REJECTED SOFTWARE
+# =====================================================
+
 rejected_records = []
 
 for _, row in df.iterrows():
-    year = row["Year"]
-    softwares = extract_software(row["Rejected Software List"])
+
+    softwares = extract_software(
+        row.get("Rejected Software List", "")
+    )
 
     for software in softwares:
+
         rejected_records.append({
-            "Year": year,
+
+            "Year": row["Year"],
+
             "Software": software
+
         })
 
-rejected_df = pd.DataFrame(rejected_records)
-
-if len(rejected_df) > 0:
-    rejected_count = (
-        rejected_df
-        .groupby(["Year", "Software"])
-        .size()
-        .reset_index(name="Rejected Count")
-    )
-else:
-    rejected_count = pd.DataFrame(
-        columns=["Year", "Software", "Rejected Count"]
-    )
-
-# -----------------------------
-# Merge Approved + Rejected
-# -----------------------------
-final_df = pd.merge(
-    approved_count,
-    rejected_count,
-    on=["Year", "Software"],
-    how="outer"
-).fillna(0)
-
-# Sort
-final_df = final_df.sort_values(
-    by=["Year", "Approved Count"],
-    ascending=[True, False]
+rejected_df = pd.DataFrame(
+    rejected_records
 )
 
-# Convert counts to int
+if len(rejected_df):
+
+    rejected_count = (
+
+        rejected_df
+
+        .groupby(
+            ["Year", "Software"]
+        )
+
+        .size()
+
+        .reset_index(name="Rejected Count")
+
+    )
+
+else:
+
+    rejected_count = pd.DataFrame(
+        columns=[
+            "Year",
+            "Software",
+            "Rejected Count"
+        ]
+    )
+
+# =====================================================
+# MERGE
+# =====================================================
+
+final_df = pd.merge(
+
+    approved_count,
+
+    rejected_count,
+
+    on=[
+        "Year",
+        "Software"
+    ],
+
+    how="outer"
+
+).fillna(0)
+
 final_df["Approved Count"] = final_df["Approved Count"].astype(int)
 final_df["Rejected Count"] = final_df["Rejected Count"].astype(int)
 
-# -----------------------------
-# Save Output
-# -----------------------------
-os.makedirs(os.path.dirname(output_file), exist_ok=True)
-final_df.to_csv(output_file, index=False)
+final_df = final_df.sort_values(
 
-print("\n✅ File created:", output_file)
+    by=[
+        "Year",
+        "Approved Count"
+    ],
+
+    ascending=[
+        True,
+        False
+    ]
+
+)
+
+# =====================================================
+# SAVE
+# =====================================================
+
+os.makedirs(
+    os.path.dirname(OUTPUT_FILE),
+    exist_ok=True
+)
+
+final_df.to_csv(
+    OUTPUT_FILE,
+    index=False
+)
+
+print("\n========================================")
+print("SOFTWARE SUMMARY")
+print("========================================")
 print(final_df.head(20))
+print("\nSaved :", OUTPUT_FILE)
+print("========================================")

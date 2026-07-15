@@ -1,102 +1,196 @@
 import pandas as pd
 import os
 
-# -----------------------------
-# Get project root dynamically
-# -----------------------------
+# =====================================================
+# PATHS
+# =====================================================
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Go up 2 levels → Backend/data
-BASE_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..", "..", "data"))
+BASE_DIR = os.path.abspath(
+    os.path.join(
+        CURRENT_DIR,
+        "..",
+        "..",
+        "data"
+    )
+)
 
-print("📁 Base Dir:", BASE_DIR)
+MASTER_FILE = os.path.join(
+    BASE_DIR,
+    "Master",
+    "master_assets.csv"
+)
 
-asset_file = os.path.join(BASE_DIR, "Master", "master_assets.xlsx")
-output_file = os.path.join(BASE_DIR, "processed", "Asset_Category_Count.csv")
+OUTPUT_FILE = os.path.join(
+    BASE_DIR,
+    "processed",
+    "Asset_Category_Count.csv"
+)
 
-print("📄 Asset File Path:", asset_file)
+print("\n========================================")
+print("ASSET CATEGORY PIPELINE")
+print("========================================")
+print("Master File :", MASTER_FILE)
+print("Output File :", OUTPUT_FILE)
+print("========================================\n")
 
-# -----------------------------
-# Load Excel
-# -----------------------------
-df_assets = pd.read_excel(asset_file, engine="openpyxl")
+# =====================================================
+# LOAD MASTER CSV
+# =====================================================
 
-print("\n========== RAW ASSET DEBUG ==========")
-print("Rows loaded:", len(df_assets))
-print(df_assets.tail(10))
+if not os.path.exists(MASTER_FILE):
+    raise FileNotFoundError(
+        f"Master Asset CSV not found:\n{MASTER_FILE}"
+    )
 
-# -----------------------------
-# Date Parsing
-# -----------------------------
+df_assets = pd.read_csv(
+    MASTER_FILE,
+    dtype=str,
+    low_memory=False
+)
+
+print("Rows Loaded :", len(df_assets))
+
+# =====================================================
+# DATE
+# =====================================================
+
 df_assets["Created"] = pd.to_datetime(
     df_assets["Created"],
     errors="coerce"
 )
 
-df_assets["Year"] = df_assets["Created"].dt.year
-
-print("\n========== YEAR DEBUG ==========")
-print(df_assets["Year"].value_counts(dropna=False))
-
-asset_column = "Asset List"
-
-# -----------------------------
-# Cleaning
-# -----------------------------
-df_assets = df_assets[df_assets[asset_column].notna()]
-df_assets[asset_column] = df_assets[asset_column].astype(str)
-
-df_assets[asset_column] = df_assets[asset_column].str.replace(
-    r'\s+', ' ', regex=True
-)
-
-df_assets[asset_column] = df_assets[asset_column].str.replace(
-    ',+', ',', regex=True
-)
-
-# -----------------------------
-# Split
-# -----------------------------
-df_exploded = df_assets.assign(
-    Category=df_assets[asset_column].str.split(",")
-).explode("Category")
-
-df_exploded["Category"] = df_exploded["Category"].str.strip()
-
-df_exploded = df_exploded[
-    (df_exploded["Category"] != "") &
-    (df_exploded["Category"].notna())
+df_assets = df_assets[
+    df_assets["Created"].notna()
 ]
 
-df_exploded["Category"] = df_exploded["Category"].str.title()
+df_assets["Year"] = df_assets["Created"].dt.year
 
-df_exploded["Category"] = df_exploded["Category"].replace({
-    "Accesories": "Accessories",
-    "Key Board": "Keyboard",
-    "Dongel": "Dongle"
-})
+print("\n========== YEAR DISTRIBUTION ==========")
+print(df_assets["Year"].value_counts().sort_index())
 
-# -----------------------------
-# Count
-# -----------------------------
-category_count = (
-    df_exploded
-    .groupby(["Year", "Category"])
-    .size()
-    .reset_index(name="Count")
+# =====================================================
+# ASSET LIST CLEANING
+# =====================================================
+
+ASSET_COLUMN = "Asset List"
+
+df_assets = df_assets[
+    df_assets[ASSET_COLUMN].notna()
+].copy()
+
+df_assets[ASSET_COLUMN] = (
+    df_assets[ASSET_COLUMN]
+    .astype(str)
+    .str.replace(r"\s+", " ", regex=True)
+    .str.replace(r",+", ",", regex=True)
+    .str.strip()
 )
 
-category_count.columns = ["Year", "Asset Category", "Count"]
+# =====================================================
+# SPLIT MULTIPLE ASSETS
+# =====================================================
 
-print("\n========== FINAL CSV DEBUG ==========")
-print(category_count[category_count["Year"] == 2026].head(20))
+df_assets["Category"] = (
+    df_assets[ASSET_COLUMN]
+    .str.split(",")
+)
 
-# -----------------------------
-# Save
-# -----------------------------
-os.makedirs(os.path.join(BASE_DIR, "processed"), exist_ok=True)
+df_assets = df_assets.explode("Category")
 
-category_count.to_csv(output_file, index=False)
+df_assets["Category"] = (
+    df_assets["Category"]
+    .fillna("")
+    .astype(str)
+    .str.strip()
+)
 
-print("\n✅ Output saved at:", output_file)
-print(category_count.head(10))
+df_assets = df_assets[
+    df_assets["Category"] != ""
+]
+
+# =====================================================
+# STANDARDIZE NAMES
+# =====================================================
+
+df_assets["Category"] = (
+    df_assets["Category"]
+    .str.title()
+)
+
+df_assets["Category"] = df_assets["Category"].replace({
+
+    "Accesories": "Accessories",
+
+    "Key Board": "Keyboard",
+
+    "Dongel": "Dongle"
+
+})
+
+# =====================================================
+# COUNT
+# =====================================================
+
+category_count = (
+
+    df_assets
+
+    .groupby(
+        ["Year", "Category"]
+    )
+
+    .size()
+
+    .reset_index(name="Count")
+
+)
+
+category_count.rename(
+
+    columns={
+
+        "Category": "Asset Category"
+
+    },
+
+    inplace=True
+
+)
+
+category_count = category_count.sort_values(
+
+    by=["Year", "Count"],
+
+    ascending=[True, False]
+
+)
+
+# =====================================================
+# SAVE
+# =====================================================
+
+os.makedirs(
+
+    os.path.join(BASE_DIR, "processed"),
+
+    exist_ok=True
+
+)
+
+category_count.to_csv(
+
+    OUTPUT_FILE,
+
+    index=False
+
+)
+
+print("\n========================================")
+print("ASSET CATEGORY SUMMARY")
+print("========================================")
+print("Total Records :", len(category_count))
+print(category_count.head(20))
+print("\nSaved :", OUTPUT_FILE)
+print("========================================")

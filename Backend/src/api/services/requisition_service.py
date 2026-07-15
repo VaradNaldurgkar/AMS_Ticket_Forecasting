@@ -20,8 +20,15 @@ MASTER_DIR = os.path.join(
     "Master"
 )
 
-ASSET_FILE = os.path.join(MASTER_DIR, "master_assets.xlsx")
-SOFTWARE_FILE = os.path.join(MASTER_DIR, "master_software.xlsx")
+ASSET_FILE = os.path.join(
+    MASTER_DIR,
+    "master_assets.csv"
+)
+
+SOFTWARE_FILE = os.path.join(
+    MASTER_DIR,
+    "master_software.csv"
+)
 
 # ======================================================
 # GLOBAL DATA CACHE
@@ -37,15 +44,44 @@ def load_master_data():
     print("Loading master files into memory...")
 
     if os.path.exists(ASSET_FILE):
-        ASSET_DF = pd.read_excel(ASSET_FILE)
+        ASSET_DF = pd.read_csv(
+    ASSET_FILE,
+    low_memory=False
+)
         print("Asset data loaded:", len(ASSET_DF))
 
     if os.path.exists(SOFTWARE_FILE):
-        SOFTWARE_DF = pd.read_excel(SOFTWARE_FILE)
+        SOFTWARE_DF = pd.read_csv(
+    SOFTWARE_FILE,
+    low_memory=False
+)
         print("Software data loaded:", len(SOFTWARE_DF))
 
 
 load_master_data()
+
+
+# ======================================================
+# REFRESH MASTER DATA
+# ======================================================
+
+def refresh_master_data():
+
+    global ASSET_DF, SOFTWARE_DF
+
+    if os.path.exists(ASSET_FILE):
+
+        ASSET_DF = pd.read_csv(
+            ASSET_FILE,
+            low_memory=False
+        )
+
+    if os.path.exists(SOFTWARE_FILE):
+
+        SOFTWARE_DF = pd.read_csv(
+            SOFTWARE_FILE,
+            low_memory=False
+        )
 
 
 # ======================================================
@@ -147,6 +183,8 @@ def extract_software(text):
 
 def get_asset_breakdown(year="all", start_date=None, end_date=None):
 
+    refresh_master_data()
+
     global ASSET_DF
 
     if ASSET_DF is None:
@@ -191,6 +229,8 @@ def get_asset_breakdown(year="all", start_date=None, end_date=None):
 # ======================================================
 
 def get_software_breakdown(year="all", start_date=None, end_date=None):
+
+    refresh_master_data()
 
     global SOFTWARE_DF
 
@@ -239,6 +279,8 @@ def get_software_breakdown(year="all", start_date=None, end_date=None):
 
 def get_asset_dashboard(year="all", start_date=None, end_date=None):
 
+    refresh_master_data()
+
     global ASSET_DF
 
     if ASSET_DF is None:
@@ -286,6 +328,8 @@ def get_asset_dashboard(year="all", start_date=None, end_date=None):
 # ======================================================
 
 def get_software_dashboard(year="all", start_date=None, end_date=None):
+
+    refresh_master_data()
 
     global SOFTWARE_DF
 
