@@ -30,9 +30,33 @@ print("============================================\n")
 # ============================================================
 
 VALID_GROUPS = [
-    "AV/VC Support VW Group IT Solution",
     "Asset Support VW Group IT Solution",
-    "Service Desk VW Group IT Solution"
+    "AUAP O365 AMS Users Support VW Group",
+    "AV/VC Support VW Group IT Solution",
+    "AZUF Network L3 Advanced Support VW Group",
+    "BI AMS Service Desk VW Group",
+    "Devstack Support VW Group",
+    "DIPON VWITS Support SKODA",
+    "DWP User Profile Support VW Group",
+    "Exchange Support SKODA Auto VW India",
+    "Group Client SD Advanced Support VW Group",
+    "ISERVE Services Support VW Group",
+    "IT4IT Support VW Group IT Solution",
+    "ITAM Support VW Group",
+    "KAM Support SKODA Auto VW India",
+    "M365 Basis Infra Advanced Support VW Group",
+    "MAC Support VW",
+    "Mailing Services MX - Vulnerabilities and Compliance Support VW Group",
+    "Network Support SKODA Auto VW India Pune",
+    "Power BI Support VW Group",
+    "PRESS II AMS ITSP Support VW Group",
+    "SC3 Support VW Group",
+    "Server Support SKODA Auto VW India Pune",
+    "Service Desk VW Group IT Solution",
+    "SF Support VW Group IT Solution",
+    "UAM Support VW Group IT Solution",
+    "User Connectivity Dispatcher Internet Access Remote Access Support VW Group",
+    "User Connectivity Group Device Advanced Support VW Group"
 ]
 
 LOCATION = "pune"
@@ -63,6 +87,7 @@ def normalize_strings(df):
 
             df[col] = (
                 df[col]
+                .fillna("")
                 .astype(str)
                 .str.strip()
             )
@@ -105,34 +130,35 @@ def read_excel_auto(file_path, sheet_name, required_column):
 # ============================================================
 # DETECT REPORT TYPE
 # ============================================================
+
 def get_report_type(file_path: Path):
 
-    xls = pd.ExcelFile(file_path)
+    with pd.ExcelFile(file_path) as xls:
 
-    if "Incident Records" in xls.sheet_names:
-        return "incident"
-
-    if "Request Records" in xls.sheet_names:
-        return "request"
-
-    if "Sheet1" in xls.sheet_names:
-
-        df = pd.read_excel(
-            file_path,
-            sheet_name="Sheet1",
-            nrows=5
-        )
-
-        df.columns = [
-            str(c).replace("\n", " ").strip()
-            for c in df.columns
-        ]
-
-        if "Incident ID" in df.columns:
+        if "Incident Records" in xls.sheet_names:
             return "incident"
 
-        if "Request ID" in df.columns:
+        if "Request Records" in xls.sheet_names:
             return "request"
+
+        if "Sheet1" in xls.sheet_names:
+
+            df = pd.read_excel(
+                xls,
+                sheet_name="Sheet1",
+                nrows=5
+            )
+
+            df.columns = [
+                str(c).replace("\n", " ").strip()
+                for c in df.columns
+            ]
+
+            if "Incident ID" in df.columns:
+                return "incident"
+
+            if "Request ID" in df.columns:
+                return "request"
 
     return "unknown"
 
@@ -148,18 +174,18 @@ def read_incident_report(file_path: Path):
 
     print(f"\nReading Incident Report : {file_path.name}")
 
-    xls = pd.ExcelFile(file_path)
+    with pd.ExcelFile(file_path) as xls:
 
-    if "Incident Records" in xls.sheet_names:
-        sheet = "Incident Records"
+        if "Incident Records" in xls.sheet_names:
+            sheet = "Incident Records"
 
-    elif "Sheet1" in xls.sheet_names:
-        sheet = "Sheet1"
+        elif "Sheet1" in xls.sheet_names:
+            sheet = "Sheet1"
 
-    else:
-        raise Exception(
-            f"Unknown Incident format : {file_path.name}"
-        )
+        else:
+            raise Exception(
+                f"Unknown Incident format : {file_path.name}"
+            )
 
     df = read_excel_auto(
         file_path,
@@ -182,7 +208,6 @@ def read_incident_report(file_path: Path):
 
     return df
 
-
 # ============================================================
 # READ REQUEST REPORT
 # Supports:
@@ -194,25 +219,21 @@ def read_request_report(file_path: Path):
 
     print(f"\nReading Request Report : {file_path.name}")
 
-    xls = pd.ExcelFile(file_path)
+    with pd.ExcelFile(file_path) as xls:
 
-    # -------------------------------------------------------
-    # Detect Sheet
-    # -------------------------------------------------------
+        if "Request Records" in xls.sheet_names:
 
-    if "Request Records" in xls.sheet_names:
+            sheet = "Request Records"
 
-        sheet = "Request Records"
+        elif "Sheet1" in xls.sheet_names:
 
-    elif "Sheet1" in xls.sheet_names:
+            sheet = "Sheet1"
 
-        sheet = "Sheet1"
+        else:
 
-    else:
-
-        raise Exception(
-            f"Unknown Request format : {file_path.name}"
-        )
+            raise Exception(
+                f"Unknown Request format : {file_path.name}"
+            )
 
     # -------------------------------------------------------
     # Automatically detect correct header
@@ -259,22 +280,22 @@ def filter_ams_dataframe(df):
     print("\n========== REQUEST FILTER DEBUG ==========")
 
     # ---------------------------------------------------
-    # Resolve Group Check
+    # Close Group Check
     # ---------------------------------------------------
 
-    if "Resolve Group" not in df.columns:
-        print("Resolve Group column not found.")
-        return df
+    if "Close Group" not in df.columns:
+      print("Close Group column not found.")
+      return df
 
-    df["Resolve Group"] = (
-        df["Resolve Group"]
-        .fillna("")
-        .astype(str)
-        .str.strip()
-    )
+    df["Close Group"] = (
+    df["Close Group"]
+    .fillna("")
+    .astype(str)
+    .str.strip()
+)
 
-    print("\nResolve Group Distribution:")
-    print(df["Resolve Group"].value_counts(dropna=False).head(20))
+    print("\nClose Group Distribution:")
+    print(df["Close Group"].value_counts(dropna=False).head(20))
 
     # ---------------------------------------------------
     # Location Check
@@ -307,36 +328,60 @@ def filter_ams_dataframe(df):
     print(df["CI Location.1"].value_counts(dropna=False).head(20))
 
     # ---------------------------------------------------
-    # Resolve Group Filter
+    # Close Group Filter
     # ---------------------------------------------------
 
     df = df[
-        df["Resolve Group"].isin(VALID_GROUPS)
+    df["Close Group"].isin(VALID_GROUPS)
     ]
 
-    print("\nRows after Resolve Group filter :", len(df))
+    print("\nRows after Close Group filter :", len(df))
 
-    # ---------------------------------------------------
+     # ---------------------------------------------------
     # Final Location
     # ---------------------------------------------------
 
-    df["FINAL_LOCATION"] = df["CI Location"]
-
-    df["FINAL_LOCATION"] = df["FINAL_LOCATION"].where(
-        df["FINAL_LOCATION"] != "",
-        df["CI Location.1"]
-    )
-
-    df["FINAL_LOCATION"] = (
-        df["FINAL_LOCATION"]
+    df["CI Location"] = (
+        df["CI Location"]
+        .replace("nan", "")
         .fillna("")
         .astype(str)
         .str.strip()
+    )
+
+    df["CI Location.1"] = (
+        df["CI Location.1"]
+        .replace("nan", "")
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+    df["FINAL_LOCATION"] = df["CI Location"]
+
+    mask = df["FINAL_LOCATION"] == ""
+
+    df.loc[
+        mask,
+        "FINAL_LOCATION"
+    ] = df.loc[
+        mask,
+        "CI Location.1"
+    ]
+
+    df["FINAL_LOCATION"] = (
+        df["FINAL_LOCATION"]
         .str.lower()
     )
 
     print("\nFINAL_LOCATION Distribution:")
-    print(df["FINAL_LOCATION"].value_counts(dropna=False).head(20))
+    print(
+        df["FINAL_LOCATION"]
+        .value_counts(dropna=False)
+        .head(20)
+    )
+
+
 
     # ---------------------------------------------------
     # Pune Filter

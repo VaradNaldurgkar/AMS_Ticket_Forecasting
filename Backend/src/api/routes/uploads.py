@@ -5,6 +5,7 @@ from typing import List
 import shutil
 import subprocess
 import traceback
+import sys
 
 from api.services.uploads_service import (
     get_report_type,
@@ -76,7 +77,9 @@ async def upload_excel(
             save_path = RAW_FOLDER / f"{timestamp}_{file.filename}"
 
         with open(save_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+           shutil.copyfileobj(file.file, buffer)
+
+        await file.close()
 
         saved_paths.append(save_path)
 
@@ -134,7 +137,7 @@ async def upload_excel(
 
             subprocess.run(
                 [
-                    "python",
+                    sys.executable,
                     str(AMS_SCRIPT)
                 ],
                 check=True
@@ -146,7 +149,7 @@ async def upload_excel(
 
             subprocess.run(
                 [
-                    "python",
+                    sys.executable,
                     str(AGG_SCRIPT)
                 ],
                 check=True
@@ -173,7 +176,7 @@ async def upload_excel(
 
             subprocess.run(
                 [
-                    "python",
+                    sys.executable,
                     str(ASSET_SCRIPT)
                 ],
                 check=True
@@ -199,7 +202,7 @@ async def upload_excel(
 
             subprocess.run(
                 [
-                    "python",
+                    sys.executable,
                     str(SOFTWARE_SCRIPT)
                 ],
                 check=True

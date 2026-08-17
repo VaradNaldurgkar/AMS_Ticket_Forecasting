@@ -157,7 +157,7 @@ columns_needed = [
     "Call Code",
     "CI Location",
     "CI Location.1",
-    "Resolve Group"
+    "Close Group"
 
 ]
 
@@ -292,7 +292,7 @@ for col in [
 
     "Location",
 
-    "Resolve Group"
+    "Close Group"
 
 ]:
 
@@ -343,10 +343,10 @@ print(
     )
 )
 
-print("\nResolve Groups")
+print("\nClose Groups")
 
 print(
-    df["Resolve Group"]
+    df["Close Group"]
     .value_counts()
 )
 
