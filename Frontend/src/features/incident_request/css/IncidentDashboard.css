@@ -1,31 +1,45 @@
+/* ============================================================
+   INCIDENT DASHBOARD
+   ============================================================ */
+
 .incident-dashboard {
   padding: 28px 32px;
   background: #f5f7f6;
   min-height: 100vh;
   font-family: "Segoe UI", "Inter", sans-serif;
 }
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
 .incident-dashboard__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
+
 .incident-dashboard__title {
   font-size: 24px;
   font-weight: 700;
   color: #111827;
   margin: 0 0 4px;
 }
+
 .incident-dashboard__sub {
   font-size: 15px;
   color: #6b7280;
   margin: 0;
 }
+
 .incident-dashboard__header-right {
   display: flex;
   align-items: center;
   gap: 6px;
 }
+
 .incident-dashboard__live-dot {
   width: 8px;
   height: 8px;
@@ -33,22 +47,347 @@
   background: #1d9e75;
   animation: pulse-dot 1.8s infinite;
 }
+
 .incident-dashboard__live-label {
   font-size: 12px;
   color: #0f6e56;
   font-weight: 500;
 }
+
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.3); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.3);
+  }
 }
+
+
+/* ============================================================
+   FILTER PANEL
+   ============================================================ */
+
+.incident-dashboard__filters {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+
+/* ============================================================
+   INDIVIDUAL FILTER
+   ============================================================ */
+
+.incident-dashboard__filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.incident-dashboard__filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+
+/* ============================================================
+   SELECT + DATE INPUT
+   ============================================================ */
+
+.incident-dashboard__filter-select,
+.incident-dashboard__filter-input {
+  height: 38px;
+  min-width: 145px;
+
+  padding: 0 11px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+
+  background: #ffffff;
+
+  color: #111827;
+
+  font-family: "Segoe UI", "Inter", sans-serif;
+  font-size: 13px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.incident-dashboard__filter-input {
+  min-width: 150px;
+}
+
+
+/* ============================================================
+   FILTER FOCUS
+   ============================================================ */
+
+.incident-dashboard__filter-select:focus,
+.incident-dashboard__filter-input:focus {
+  border-color: #159f8a;
+
+  box-shadow: 0 0 0 2px rgba(21, 159, 138, 0.12);
+}
+
+
+/* ============================================================
+   FILTER ACTIONS
+   ============================================================ */
+
+.incident-dashboard__filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+/* ============================================================
+   APPLY BUTTON
+   ============================================================ */
+
+.incident-dashboard__apply-btn {
+  height: 38px;
+
+  padding: 0 17px;
+
+  border: none;
+  border-radius: 7px;
+
+  background: #159f8a;
+  color: #ffffff;
+
+  font-family: "Segoe UI", "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.1s ease,
+    box-shadow 0.2s ease;
+}
+
+.incident-dashboard__apply-btn:hover {
+  background: #0f8775;
+  box-shadow: 0 2px 6px rgba(15, 135, 117, 0.2);
+}
+
+.incident-dashboard__apply-btn:active {
+  transform: translateY(1px);
+}
+
+
+/* ============================================================
+   CLEAR BUTTON
+   ============================================================ */
+
+.incident-dashboard__clear-btn {
+  height: 38px;
+
+  padding: 0 16px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+
+  background: #ffffff;
+  color: #374151;
+
+  font-family: "Segoe UI", "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.incident-dashboard__clear-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+
+/* ============================================================
+   FILTER RESULTS / ACTIVE FILTER INFORMATION
+   ============================================================ */
+
+.incident-dashboard__filter-info {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  padding-top: 4px;
+
+  font-size: 12px;
+  color: #6b7280;
+}
+
+
+/* ============================================================
+   LOADING / ERROR
+   ============================================================ */
+
+.incident-dashboard__loading,
+.incident-dashboard__error {
+  padding: 40px;
+  text-align: center;
+
+  color: #374151;
+  font-size: 15px;
+}
+
+.incident-dashboard__error {
+  color: #b91c1c;
+}
+
+
+/* ============================================================
+   DASHBOARD ROW
+   ============================================================ */
+
 .incident-dashboard__row-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin-bottom: 16px;
 }
+
+
+/* ============================================================
+   GENERAL CARD STYLING
+   ============================================================ */
+
+.incident-dashboard .card,
+.incident-dashboard__card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+
+/* ============================================================
+   DATE INPUT CALENDAR ICON
+   ============================================================ */
+
+.incident-dashboard__filter-input[type="date"] {
+  color-scheme: light;
+}
+
+
+/* ============================================================
+   DISABLED STATE
+   ============================================================ */
+
+.incident-dashboard__filter-select:disabled,
+.incident-dashboard__filter-input:disabled,
+.incident-dashboard__apply-btn:disabled,
+.incident-dashboard__clear-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1100px) {
+
+  .incident-dashboard {
+    padding: 22px 24px;
+  }
+
+  .incident-dashboard__filters {
+    align-items: flex-end;
+  }
+
+  .incident-dashboard__filter-select,
+  .incident-dashboard__filter-input {
+    min-width: 130px;
+  }
+
+}
+
+
 @media (max-width: 900px) {
-  .incident-dashboard { padding: 18px 16px; }
-  .incident-dashboard__row-2 { grid-template-columns: 1fr; }
+
+  .incident-dashboard {
+    padding: 18px 16px;
+  }
+
+  .incident-dashboard__row-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .incident-dashboard__filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  .incident-dashboard__filter-select,
+  .incident-dashboard__filter-input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .incident-dashboard__filter-actions {
+    grid-column: 1 / -1;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .incident-dashboard {
+    padding: 16px 12px;
+  }
+
+  .incident-dashboard__title {
+    font-size: 21px;
+  }
+
+  .incident-dashboard__sub {
+    font-size: 13px;
+  }
+
+  .incident-dashboard__filters {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .incident-dashboard__filter-actions {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  .incident-dashboard__apply-btn,
+  .incident-dashboard__clear-btn {
+    flex: 1;
+  }
+
 }
