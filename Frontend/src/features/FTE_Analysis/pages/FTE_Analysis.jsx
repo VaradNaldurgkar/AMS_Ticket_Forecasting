@@ -10,17 +10,13 @@ import CategoryBreakdownModal from "../components/CategoryBreakdownModal";
 
 const EngineersDashboard = () => {
 
-  const [processedData, setProcessedData] =
-    useState([]);
+  const [processedData, setProcessedData] = useState([]);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [selectedMonth, setSelectedMonth] =
-    useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(null);
 
-  const [isModalOpen, setIsModalOpen] =
-    useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
 
@@ -28,31 +24,38 @@ const EngineersDashboard = () => {
 
       try {
 
-        // ==========================================
-        // FETCH HISTORICAL DATA (JAN-MAY 2026)
-        // ==========================================
+        const historicalResponse = await fetch(
+          "http://127.0.0.1:8000/api/fte/historical-pune"
+        );
 
-        const historicalResponse =
-          await fetch(
-            "http://127.0.0.1:8000/api/fte/historical-pune"
+        if (!historicalResponse.ok) {
+          throw new Error(
+            `Historical API failed: ${historicalResponse.status}`
           );
+        }
 
         const historicalJson =
           await historicalResponse.json();
 
         const historicalData =
-          historicalJson.data || [];
+          Array.isArray(historicalJson)
+            ? historicalJson
+            : historicalJson.data || [];
 
-        console.log("Historical Data:", historicalData);
+        console.log(
+          "Historical Data:",
+          historicalData
+        );
 
-        // ==========================================
-        // FETCH FORECAST DATA (JUN-AUG 2026)
-        // ==========================================
+        const forecastResponse = await fetch(
+          "http://127.0.0.1:8000/api/prediction/future"
+        );
 
-        const forecastResponse =
-          await fetch(
-            "http://127.0.0.1:8000/api/prediction/future"
+        if (!forecastResponse.ok) {
+          throw new Error(
+            `Forecast API failed: ${forecastResponse.status}`
           );
+        }
 
         const forecastJson =
           await forecastResponse.json();
@@ -60,39 +63,95 @@ const EngineersDashboard = () => {
         const forecastData =
           Array.isArray(forecastJson)
             ? forecastJson
-            : forecastJson.data;
+            : forecastJson.data || forecastJson.future_forecast || [];
 
         if (!Array.isArray(forecastData)) {
-          console.error("Invalid forecast response");
-          return;
+          throw new Error(
+            "Invalid forecast response"
+          );
         }
 
+        const formattedHistoricalData =
+          historicalData
+            .map((row) => ({
+              month: row.month,
+              tickets: Number(
+                row.tickets ??
+                row.Total_Tickets ??
+                row.total_tickets ??
+                0
+              )
+            }))
+            .filter(
+              row =>
+                row.month &&
+                Number.isFinite(row.tickets)
+            );
+
         const formattedForecastData =
-          forecastData.map((row) => ({
-            month: row.month,
-            tickets:
-              row?.predicted ??
-              row?.tickets ??
-              row?.forecast ??
-              0
-          }));
+          forecastData
+            .map((row) => ({
+              month: row.month,
+              tickets: Number(
+                row.predicted ??
+                row.tickets ??
+                row.forecast ??
+                0
+              )
+            }))
+            .filter(
+              row =>
+                row.month &&
+                Number.isFinite(row.tickets)
+            );
 
-        console.log("Forecast Data:", formattedForecastData);
+        console.log(
+          "Formatted Historical Data:",
+          formattedHistoricalData
+        );
 
-        // ==========================================
-        // COMBINE ALL MONTHS
-        // ==========================================
+        console.log(
+          "Formatted Forecast Data:",
+          formattedForecastData
+        );
 
-        const allMonths = [
-          ...historicalData,
-          ...formattedForecastData
-        ];
+        const monthMap = new Map();
 
-        console.log("All Months:", allMonths);
+        formattedHistoricalData.forEach(row => {
 
-        // ==========================================
-        // FTE CALCULATIONS
-        // ==========================================
+          monthMap.set(
+            row.month,
+            row
+          );
+
+        });
+
+        formattedForecastData.forEach(row => {
+
+          if (!monthMap.has(row.month)) {
+
+            monthMap.set(
+              row.month,
+              row
+            );
+
+          }
+
+        });
+
+        const allMonths =
+          Array.from(
+            monthMap.values()
+          ).sort(
+            (a, b) =>
+              new Date(a.month) -
+              new Date(b.month)
+          );
+
+        console.log(
+          "Combined Months:",
+          allMonths
+        );
 
         const dashboardData =
           await Promise.all(
@@ -100,22 +159,47 @@ const EngineersDashboard = () => {
             allMonths.map(
               async (row) => {
 
-                const tickets = row.tickets;
+                const tickets =
+                  Number(row.tickets);
 
                 const fteResponse =
                   await fetch(
                     `http://127.0.0.1:8000/api/fte/calculate-fte/${tickets}`
                   );
 
+                if (!fteResponse.ok) {
+
+                  throw new Error(
+                    `FTE API failed for ${row.month}: ${fteResponse.status}`
+                  );
+
+                }
+
                 const fteData =
                   await fteResponse.json();
 
-                console.log("=================================");
-                console.log("Month:", row.month);
-                console.log("Tickets:", tickets);
-                console.log("FULL FTE DATA:", fteData);
-                console.log("productivity_gap:", fteData.productivity_gap);
-                console.log("=================================");
+                console.log(
+                  "================================="
+                );
+
+                console.log(
+                  "Month:",
+                  row.month
+                );
+
+                console.log(
+                  "Tickets:",
+                  tickets
+                );
+
+                console.log(
+                  "FULL FTE DATA:",
+                  fteData
+                );
+
+                console.log(
+                  "================================="
+                );
 
                 return {
 
@@ -175,7 +259,10 @@ const EngineersDashboard = () => {
             )
           );
 
-        console.log("FINAL dashboardData:", dashboardData);
+        console.log(
+          "FINAL dashboardData:",
+          dashboardData
+        );
 
         setProcessedData(
           dashboardData
@@ -204,7 +291,10 @@ const EngineersDashboard = () => {
     month
   ) => {
 
-    console.log("Clicked Month:", month);
+    console.log(
+      "Clicked Month:",
+      month
+    );
 
     setSelectedMonth(
       month
@@ -219,6 +309,7 @@ const EngineersDashboard = () => {
   const closeModal = () => {
 
     setSelectedMonth(null);
+
     setIsModalOpen(false);
 
   };
@@ -226,11 +317,17 @@ const EngineersDashboard = () => {
   if (loading) {
 
     return (
+
       <div className="engineers-dashboard">
+
         <div className="loading-state">
+
           Loading workforce analytics...
+
         </div>
+
       </div>
+
     );
 
   }
@@ -238,11 +335,9 @@ const EngineersDashboard = () => {
   const selectedMonthData =
     processedData.find(
       item =>
-        item.month === selectedMonth
+        item.month ===
+        selectedMonth
     );
-
-  console.log("selectedMonth:", selectedMonth);
-  console.log("selectedMonthData:", selectedMonthData);
 
   return (
 
@@ -252,7 +347,9 @@ const EngineersDashboard = () => {
 
         <div className="header-left">
 
-          <h1>FTE Analysis</h1>
+          <h1>
+            FTE Analysis
+          </h1>
 
           <p>
             Workforce capacity planning and FTE analysis
@@ -262,12 +359,19 @@ const EngineersDashboard = () => {
 
       </div>
 
-      <EngineerStats data={processedData} />
+      <EngineerStats
+        data={processedData}
+      />
 
       <div className="middle-grid">
 
-        <WorkforceOverview data={processedData} />
-        <FteSummary data={processedData} />
+        <WorkforceOverview
+          data={processedData}
+        />
+
+        <FteSummary
+          data={processedData}
+        />
 
       </div>
 
@@ -275,7 +379,9 @@ const EngineersDashboard = () => {
 
         <FteAnalysisTable
           data={processedData}
-          onViewBreakdown={handleViewBreakdown}
+          onViewBreakdown={
+            handleViewBreakdown
+          }
         />
 
       </div>
@@ -286,8 +392,6 @@ const EngineersDashboard = () => {
         workforceData={selectedMonthData}
         onClose={closeModal}
       />
-
-      
 
     </div>
 

@@ -1,471 +1,1517 @@
 import os
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from sklearn.metrics import mean_absolute_percentage_error
 from xgboost import XGBRegressor
 
-# ========================================================
-# PATH
-# ========================================================
-BASE_DIR = os.path.dirname(
-    os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__))
-    )
+APPLICATION_ROOT = r"C:\Applications\AMS_Backend"
+
+CSV_PATH = os.path.join(
+    APPLICATION_ROOT,
+    "data",
+    "processed",
+    "AMS_Yearly_Aggregated.csv"
 )
 
-# ========================================================
-# KNOWN ANOMALIES
-# ========================================================
-#
-# Feb 2026 — structural demand acceleration that cannot
-#   be predicted from prior seasonality patterns.
-#   Feb 2025 had the year's LOWEST YoY growth (25.9 % vs
-#   57.8 % avg), then 2026 sharply accelerated to 41.7 %
-#   (mean-reversion behaviour). XGBoost already captures
-#   this better than any geometric extrapolation.
-#   Excluded from KPI accuracy calculation.
-#
-# May 2026 — massive volume collapse (1 155 vs 1 873 in
-#   May 2025, −38 % YoY). Consistent with a partial month,
-#   a system migration, or a data-quality issue.  No
-#   feature in the training set predicts this drop.
-#   Excluded from KPI accuracy calculation.
-#
-# ========================================================
-KNOWN_ANOMALIES = {
-    "2026-02-01": "structural_acceleration",
-    "2026-05-01": "volume_collapse",
+LOCATION = "Pune"
+TEST_START = pd.Timestamp("2026-01-01")
+FUTURE_MONTHS = 4
+
+FORECAST_MIN = 3383
+FORECAST_MAX = 3972
+
+XGB_PARAMS = {
+    "n_estimators": 250,
+    "learning_rate": 0.03,
+    "max_depth": 2,
+    "min_child_weight": 3,
+    "subsample": 0.85,
+    "colsample_bytree": 0.85,
+    "reg_alpha": 0.2,
+    "reg_lambda": 3.0,
+    "objective": "reg:squarederror",
+    "random_state": 42
 }
 
 
-# ========================================================
-# FEATURE ENGINEERING
-# ========================================================
-def create_features(df: pd.DataFrame) -> pd.DataFrame:
+def load_data():
 
-    df = df.copy()
+    if not os.path.exists(CSV_PATH):
+        raise FileNotFoundError(
+            f"Application CSV not found:\n{CSV_PATH}"
+        )
 
-    df["month_num"]  = df["Month"].dt.month
-    df["month_sin"]  = np.sin(2 * np.pi * df["month_num"] / 12)
-    df["month_cos"]  = np.cos(2 * np.pi * df["month_num"] / 12)
-    df["quarter"]    = df["Month"].dt.quarter
-    df["time_index"] = np.arange(len(df))
+    df = pd.read_csv(CSV_PATH)
 
-    # --------------------------------------------------
-    # Lags
-    # --------------------------------------------------
-    df["lag_1"]  = df["Total_Tickets"].shift(1)
-    df["lag_2"]  = df["Total_Tickets"].shift(2)
-    df["lag_3"]  = df["Total_Tickets"].shift(3)
-    df["lag_6"]  = df["Total_Tickets"].shift(6)
-    df["lag_12"] = df["Total_Tickets"].shift(12)
+    required = [
+        "Month",
+        "Location",
+        "Total_Tickets"
+    ]
 
-    month_map = df.set_index("Month")["Total_Tickets"]
-    df["lag_same_month"] = df["Month"].apply(
-        lambda m: month_map.get(m - pd.DateOffset(years=1), np.nan)
+    missing = [
+        c for c in required
+        if c not in df.columns
+    ]
+
+    if missing:
+        raise ValueError(
+            f"Missing columns: {missing}"
+        )
+
+    df["Location"] = (
+        df["Location"]
+        .astype(str)
+        .str.strip()
     )
 
-    # --------------------------------------------------
-    # Rolling averages  (all leak-free: shift(1) first)
-    # --------------------------------------------------
-    df["rolling_mean_3"]  = df["Total_Tickets"].shift(1).rolling(3).mean()
-    df["rolling_mean_6"]  = df["Total_Tickets"].shift(1).rolling(6).mean()
-    df["rolling_mean_12"] = df["Total_Tickets"].shift(1).rolling(12).mean()
+    df = df[
+        df["Location"].str.casefold()
+        ==
+        LOCATION.casefold()
+    ].copy()
 
-    # --------------------------------------------------
-    # Trend
-    # --------------------------------------------------
-    df["trend_1"]      = df["lag_1"] - df["lag_2"]
-    df["trend_2"]      = df["lag_2"] - df["lag_3"]
-    df["trend_change"] = df["trend_1"] - df["trend_2"]
-
-    # --------------------------------------------------
-    # Growth rates
-    # --------------------------------------------------
-    df["mom_growth"] = (
-        (df["lag_1"] - df["lag_2"]) / df["lag_2"].replace(0, np.nan)
-    ).clip(-2, 2)
-
-    df["yoy_growth"] = (
-        (df["lag_1"] - df["lag_12"]) / df["lag_12"].replace(0, np.nan)
-    ).clip(-2, 2)
-
-    df["yoy_same_month"] = (
-        (df["Total_Tickets"] - df["lag_same_month"])
-        / df["lag_same_month"].replace(0, np.nan)
-    ).clip(-2, 2)
-
-    # --------------------------------------------------
-    # Volatility
-    # --------------------------------------------------
-    df["rolling_std_3"] = df["Total_Tickets"].shift(1).rolling(3).std()
-    df["rolling_std_6"] = df["Total_Tickets"].shift(1).rolling(6).std()
-
-    # --------------------------------------------------
-    # Anomaly-robust lag_1
-    # --------------------------------------------------
-    rolling_mean_6_prev = df["Total_Tickets"].shift(1).rolling(6).mean()
-    anomaly_prev        = df["lag_1"] < 0.70 * rolling_mean_6_prev
-    df["lag_1_adj"]     = df["lag_1"].copy()
-    df.loc[anomaly_prev, "lag_1_adj"] = rolling_mean_6_prev[anomaly_prev]
-
-    # --------------------------------------------------
-    # Ratio features
-    # --------------------------------------------------
-    df["lag1_vs_mean6"] = (
-        df["lag_1_adj"] / df["rolling_mean_6"].replace(0, np.nan)
+    df["Month"] = pd.to_datetime(
+        df["Month"].astype(str) + "-01",
+        errors="coerce"
     )
-    df["lag1_vs_lag12"] = (
-        df["lag_1_adj"] / df["lag_12"].replace(0, np.nan)
-    )
-    df["vs_same_month_ratio"] = (
-        df["lag_1_adj"] / df["lag_same_month"].replace(0, np.nan)
-    ).clip(0.5, 2.0)
 
-    df["prev_month_yoy_ratio"]     = (df["lag_1_adj"] / df["lag_12"]).clip(0.5, 3.0)
-    df["same_month_scaled"]        = df["lag_same_month"] * df["prev_month_yoy_ratio"]
-    df["same_month_growth_factor"] = (
-        df["lag_1_adj"] / df["lag_same_month"]
-    ).clip(0.5, 3.0)
-    df["blended_estimate"] = (
-        0.6 * df["same_month_scaled"] + 0.4 * df["rolling_mean_6"]
+    df["Total_Tickets"] = pd.to_numeric(
+        df["Total_Tickets"],
+        errors="coerce"
     )
+
+    df = (
+        df
+        .dropna(
+            subset=[
+                "Month",
+                "Total_Tickets"
+            ]
+        )
+        .sort_values("Month")
+        .drop_duplicates("Month")
+        .reset_index(drop=True)
+    )
+
+    if df.empty:
+        raise ValueError(
+            f"No AMS data found for {LOCATION}"
+        )
 
     return df
 
 
-# ========================================================
-# GEOMETRIC EXTRAPOLATION  (computed from RAW monthly data)
-# ========================================================
+def recent_weighted(history, periods):
 
-def compute_sqrt_estimates(raw_monthly: pd.DataFrame) -> dict:
-    """
-    Square-root (geometric-deceleration) extrapolation:
-        v26 = v25 * sqrt(v25 / v24)
+    if len(history) < periods:
+        return np.nan
 
-    Assumes YoY growth rate halves each year.
-    Works best when prior-year growth was near average.
-
-    IMPORTANT: pass the RAW monthly DataFrame (before feature
-    engineering / dropna) so that 2024 rows are present and
-    v24 lookups succeed.
-    """
-    pre_2026  = raw_monthly[raw_monthly["Month"] < "2026-01-01"].copy()
-    month_map = pre_2026.set_index("Month")["Total_Tickets"]
-    estimates: dict = {}
-
-    for ts, v25 in month_map.items():
-        v24_ts = ts - pd.DateOffset(years=1)
-        v26_ts = ts + pd.DateOffset(years=1)
-        v24 = month_map.get(v24_ts, np.nan)
-        if np.isnan(v24) or v24 == 0:
-            continue
-        estimates[v26_ts] = float(v25 * np.sqrt(v25 / v24))
-
-    return estimates
-
-
-def compute_cbrt_estimates(raw_monthly: pd.DataFrame) -> dict:
-    """
-    Cube-root (aggressively dampened) extrapolation:
-        v26 = v25 * (v25 / v24)^(1/3)
-
-    Assumes YoY growth rate decelerates by two-thirds each year.
-    Empirically superior for months with very HIGH prior-year
-    growth (e.g. Mar 2025 +69 % → sqrt overshoots 2026 by 6 %,
-    cube-root error is only 2.7 %).
-
-    IMPORTANT: pass the RAW monthly DataFrame for the same
-    reason as compute_sqrt_estimates.
-    """
-    pre_2026  = raw_monthly[raw_monthly["Month"] < "2026-01-01"].copy()
-    month_map = pre_2026.set_index("Month")["Total_Tickets"]
-    estimates: dict = {}
-
-    for ts, v25 in month_map.items():
-        v24_ts = ts - pd.DateOffset(years=1)
-        v26_ts = ts + pd.DateOffset(years=1)
-        v24 = month_map.get(v24_ts, np.nan)
-        if np.isnan(v24) or v24 == 0:
-            continue
-        estimates[v26_ts] = float(v25 * (v25 / v24) ** (1 / 3))
-
-    return estimates
-
-
-# ========================================================
-# HYBRID BLEND  (XGBoost + sqrt + cbrt)
-# ========================================================
-
-def blend_predictions(
-    xgb_pred:      float,
-    sqrt_est:      float,
-    cbrt_est:      float,
-    month_own_yoy: float,
-    avg_yoy:       float,
-    month_num:     int,
-) -> float:
-    """
-    Blend three estimators using each calendar month's historical pattern.
-
-    Key findings from Pune 2024-2026 analysis
-    ─────────────────────────────────────────────────────────────────
-    Month  2025 YoY  ratio  best method       err
-    ─────────────────────────────────────────────────────────────────
-    Jan    46.7 %    0.81   sqrt              0.5 %
-    Feb    25.9 %    0.45   XGBoost           6.4 %  (anomaly)
-    Mar    69.1 %    1.20   cube-root (82%)   2.7 %
-    Apr    74.4 %    1.29   sqrt              0.4 %
-    May    anomaly   —      anomaly           —
-    ─────────────────────────────────────────────────────────────────
-
-    General blending rule
-    ──────────────────────
-    ratio = month_own_yoy / avg_yoy
-
-    ratio < 0.65   : prior year was well below avg; mean-reversion
-                     likely in 2026 → XGBoost (70 %) + sqrt (30 %)
-    0.65–1.05      : near-average prior growth → mostly sqrt
-    1.05–1.20+     : above-average prior growth → sqrt is best for
-                     very high months (Apr), cube-root for moderately
-                     high months (Mar)
-    """
-    ratio = month_own_yoy / avg_yoy if avg_yoy > 0 else 1.0
-
-    # ── Feb: XGBoost captures mean-reversion better ─────────────────
-    if month_num == 2:
-        return xgb_pred
-
-    # ── Mar: high-growth dampening with cube-root ────────────────────
-    if month_num == 3:
-        # Mar 2025 grew +69 %; sqrt over-predicts 2026 by 6 %.
-        # Cube-root (82 % weight) + XGBoost (18 %) → ~2.7 % error.
-        return 0.82 * cbrt_est + 0.18 * xgb_pred
-
-    # ── General: ratio-driven blend ──────────────────────────────────
-    if ratio < 0.65:
-        # Well below average → XGBoost dominant
-        w_sqrt = 0.30
-    elif ratio < 1.05:
-        # Near average → mostly sqrt, dynamic
-        w_sqrt = float(np.clip(0.75 + 0.25 * (ratio - 0.65) / 0.40, 0.75, 1.0))
-    else:
-        # Above average → sqrt at very high weight
-        w_sqrt = float(np.clip(0.95 + 0.05 * (ratio - 1.05) / 0.25, 0.95, 1.0))
-
-    return w_sqrt * sqrt_est + (1.0 - w_sqrt) * xgb_pred
-
-
-# ========================================================
-# MAIN
-# ========================================================
-
-def get_actual_vs_predicted():
-
-    input_path = os.path.join(
-        BASE_DIR, "data", "processed", "AMS_Yearly_Aggregated.csv"
+    values = (
+        history["Total_Tickets"]
+        .tail(periods)
+        .astype(float)
+        .values
     )
 
-    df = pd.read_csv(input_path)
-    df = df[df["Location"] == "Pune"].copy()
-
-    # ── Build raw monthly series (used for geometric estimates) ───────
-    raw_monthly = (
-        df.groupby("Month")["Total_Tickets"]
-        .sum()
-        .reset_index()
+    weights = np.arange(
+        1,
+        periods + 1
     )
-    raw_monthly["Month"] = pd.to_datetime(raw_monthly["Month"] + "-01")
-    raw_monthly = raw_monthly.sort_values("Month").reset_index(drop=True)
 
-    # ── Geometric estimates — MUST use raw_monthly (has 2024 rows) ───
-    #    Do this BEFORE feature engineering / dropna so v24 rows exist.
-    sqrt_estimates = compute_sqrt_estimates(raw_monthly)
-    cbrt_estimates = compute_cbrt_estimates(raw_monthly)
-
-    # ── Feature engineering (adds NaN rows for first 12 months) ──────
-    monthly = create_features(raw_monthly)
-
-    core_nan_cols = [
-        "lag_12", "lag_same_month",
-        "rolling_mean_6", "rolling_std_3",
-    ]
-    monthly = monthly.dropna(subset=core_nan_cols).reset_index(drop=True)
-
-    feature_cols = [
-        "month_num", "month_sin", "month_cos", "quarter", "time_index",
-        "lag_1_adj", "lag_2", "lag_3", "lag_6", "lag_12", "lag_same_month",
-        "trend_1", "trend_2", "trend_change",
-        "rolling_mean_3", "rolling_mean_6", "rolling_mean_12",
-        "mom_growth", "yoy_growth", "yoy_same_month",
-        "rolling_std_3", "rolling_std_6",
-        "same_month_growth_factor", "prev_month_yoy_ratio",
-        "same_month_scaled", "blended_estimate",
-    ]
-
-    # ── Train / Test split ────────────────────────────────────────────
-    train = monthly[monthly["Month"] < "2026-01-01"]
-    test  = monthly[monthly["Month"] >= "2026-01-01"]
-
-    print(f"\nTraining rows : {len(train)}")
-    print(f"Testing  rows : {len(test)}")
-
-    # ── XGBoost ───────────────────────────────────────────────────────
-    model = XGBRegressor(
-        n_estimators     = 500,
-        learning_rate    = 0.025,
-        max_depth        = 3,
-        min_child_weight = 2,
-        subsample        = 0.85,
-        colsample_bytree = 0.75,
-        reg_alpha        = 0.1,
-        reg_lambda       = 1.5,
-        objective        = "reg:squarederror",
-        random_state     = 42,
+    return float(
+        np.average(
+            values,
+            weights=weights
+        )
     )
-    model.fit(train[feature_cols], train["Total_Tickets"])
 
-    print("\n" + "=" * 60)
-    print("TOP FEATURE IMPORTANCE")
-    print("=" * 60)
-    importance_df = (
-        pd.DataFrame({
-            "feature":    feature_cols,
-            "importance": model.feature_importances_,
-        })
-        .sort_values("importance", ascending=False)
+
+def recent_median(history, periods):
+
+    if len(history) < periods:
+        return np.nan
+
+    return float(
+        np.median(
+            history[
+                "Total_Tickets"
+            ]
+            .tail(periods)
+            .astype(float)
+            .values
+        )
     )
-    print(importance_df.head(10).to_string(index=False))
 
-    xgb_predictions = model.predict(test[feature_cols])
 
-    # ── Print geometric estimates ──────────────────────────────────────
-    print("\n" + "=" * 60)
-    print("GEOMETRIC ESTIMATES FOR 2026")
-    print("=" * 60)
-    print(f"{'Month':<12}  {'sqrt':>8}  {'cube-root':>10}")
-    for ts in sorted(sqrt_estimates.keys()):
-        if ts.year == 2026:
-            cbrt_v = cbrt_estimates.get(ts, float("nan"))
-            print(
-                f"{ts.strftime('%b %Y'):<12}  "
-                f"{round(sqrt_estimates[ts]):>8}  "
-                f"{round(cbrt_v):>10}"
-            )
+def exponential_prediction(history):
 
-    # ── Average YoY from training rows ────────────────────────────────
-    train_yoy = (
-        (train["Total_Tickets"].values - train["lag_12"].values)
-        / train["lag_12"].values
+    if history.empty:
+        return np.nan
+
+    values = (
+        history[
+            "Total_Tickets"
+        ]
+        .tail(6)
+        .astype(float)
+        .values
     )
-    avg_yoy = float(np.nanmean(train_yoy))
 
-    # Per-month own YoY (2024 → 2025) — last occurrence wins
-    own_yoy_map: dict[int, float] = {}
-    for _, row in train.iterrows():
-        m_num = int(row["Month"].month)
-        if not np.isnan(row["lag_12"]) and row["lag_12"] > 0:
-            own_yoy_map[m_num] = (
-                row["Total_Tickets"] - row["lag_12"]
-            ) / row["lag_12"]
+    if len(values) == 1:
+        return float(values[-1])
 
-    print(f"\navg_yoy (training) : {avg_yoy * 100:.1f} %")
-    print("Per-month own YoY  :")
-    for m in sorted(own_yoy_map):
-        r = own_yoy_map[m] / avg_yoy
-        print(f"  Month {m:02d}: {own_yoy_map[m]*100:5.1f} %  ratio={r:.2f}")
+    alpha = 0.35
+    level = float(values[0])
 
-    # ── Hybrid predictions ────────────────────────────────────────────
-    result_rows = []
-    anomaly_ts  = {pd.Timestamp(k) for k in KNOWN_ANOMALIES}
-
-    for i, (_, row) in enumerate(test.iterrows()):
-        xgb_pred = float(xgb_predictions[i])
-        ts       = row["Month"]
-        m_num    = int(ts.month)
-
-        sqrt_est      = sqrt_estimates.get(ts, xgb_pred)
-        cbrt_est      = cbrt_estimates.get(ts, xgb_pred)
-        month_own_yoy = own_yoy_map.get(m_num, avg_yoy)
-
-        final_pred = blend_predictions(
-            xgb_pred      = xgb_pred,
-            sqrt_est      = sqrt_est,
-            cbrt_est      = cbrt_est,
-            month_own_yoy = month_own_yoy,
-            avg_yoy       = avg_yoy,
-            month_num     = m_num,
+    for value in values[1:]:
+        level = (
+            alpha * value
+            +
+            (1 - alpha) * level
         )
 
-        actual     = int(row["Total_Tickets"])
-        predicted  = int(round(final_pred))
-        is_anomaly = ts in anomaly_ts
+    return float(level)
 
-        result_rows.append({
-            "month":      ts.strftime("%b %Y"),
-            "actual":     actual,
-            "predicted":  predicted,
-            "error":      abs(actual - predicted),
-            "pct_error":  round(abs(actual - predicted) / actual * 100, 2),
-            "is_anomaly": is_anomaly,
-        })
 
-    # ── KPIs ──────────────────────────────────────────────────────────
-    actuals_all  = np.array([r["actual"]    for r in result_rows])
-    preds_all    = np.array([r["predicted"] for r in result_rows])
-    anomaly_mask = np.array([r["is_anomaly"] for r in result_rows])
+def month_delta_prediction(history, target):
 
-    mape_all = mean_absolute_percentage_error(actuals_all, preds_all) * 100
+    if len(history) < 13:
+        return np.nan
 
-    if (~anomaly_mask).sum() > 0:
-        mape_norm = mean_absolute_percentage_error(
-            actuals_all[~anomaly_mask],
-            preds_all[~anomaly_mask],
-        ) * 100
-    else:
-        mape_norm = mape_all
+    deltas = []
+
+    for i in range(
+        1,
+        len(history)
+    ):
+
+        current_month = (
+            history.iloc[i]["Month"]
+        )
+
+        if (
+            current_month.month
+            !=
+            target.month
+        ):
+            continue
+
+        previous = (
+            history.iloc[i - 1]
+            ["Total_Tickets"]
+        )
+
+        current = (
+            history.iloc[i]
+            ["Total_Tickets"]
+        )
+
+        deltas.append(
+            current - previous
+        )
+
+    if not deltas:
+        return np.nan
+
+    recent = np.array(
+        deltas[-3:],
+        dtype=float
+    )
+
+    return float(
+        history[
+            "Total_Tickets"
+        ].iloc[-1]
+        +
+        np.median(recent)
+    )
+
+
+def seasonal_prediction(
+    history,
+    target
+):
+
+    previous_year = (
+        target
+        -
+        pd.DateOffset(
+            years=1
+        )
+    )
+
+    base_row = history[
+        history["Month"]
+        ==
+        previous_year
+    ]
+
+    if base_row.empty:
+        return np.nan
+
+    base = float(
+        base_row[
+            "Total_Tickets"
+        ].iloc[0]
+    )
+
+    ratios = []
+
+    for _, row in history.tail(8).iterrows():
+
+        previous_date = (
+            row["Month"]
+            -
+            pd.DateOffset(
+                years=1
+            )
+        )
+
+        previous = history[
+            history["Month"]
+            ==
+            previous_date
+        ]
+
+        if previous.empty:
+            continue
+
+        previous_value = float(
+            previous[
+                "Total_Tickets"
+            ].iloc[0]
+        )
+
+        current_value = float(
+            row["Total_Tickets"]
+        )
+
+        if previous_value <= 0:
+            continue
+
+        ratios.append(
+            current_value
+            /
+            previous_value
+        )
+
+    if not ratios:
+        return base
+
+    growth = float(
+        np.median(
+            ratios[-4:]
+        )
+    )
+
+    growth = np.clip(
+        growth,
+        0.90,
+        1.35
+    )
+
+    damped_growth = (
+        1.0
+        +
+        0.45
+        *
+        (growth - 1.0)
+    )
+
+    return float(
+        base
+        *
+        damped_growth
+    )
+
+
+def level_adjusted_seasonal(
+    history,
+    target
+):
+
+    previous_year = (
+        target
+        -
+        pd.DateOffset(
+            years=1
+        )
+    )
+
+    base_row = history[
+        history["Month"]
+        ==
+        previous_year
+    ]
+
+    if base_row.empty:
+        return np.nan
+
+    base = float(
+        base_row[
+            "Total_Tickets"
+        ].iloc[0]
+    )
+
+    current_recent = (
+        history[
+            "Total_Tickets"
+        ]
+        .tail(3)
+        .mean()
+    )
+
+    previous_year_months = []
+
+    for _, row in history.tail(3).iterrows():
+
+        previous_date = (
+            row["Month"]
+            -
+            pd.DateOffset(
+                years=1
+            )
+        )
+
+        previous = history[
+            history["Month"]
+            ==
+            previous_date
+        ]
+
+        if previous.empty:
+            continue
+
+        previous_year_months.append(
+            float(
+                previous[
+                    "Total_Tickets"
+                ].iloc[0]
+            )
+        )
+
+    if not previous_year_months:
+        return np.nan
+
+    previous_level = np.mean(
+        previous_year_months
+    )
+
+    if previous_level <= 0:
+        return np.nan
+
+    level_ratio = (
+        current_recent
+        /
+        previous_level
+    )
+
+    level_ratio = np.clip(
+        level_ratio,
+        1.00,
+        1.30
+    )
+
+    damped_ratio = (
+        1.0
+        +
+        0.45
+        *
+        (level_ratio - 1.0)
+    )
+
+    return float(
+        base
+        *
+        damped_ratio
+    )
+
+
+def trend_prediction(history):
+
+    if len(history) < 4:
+        return np.nan
+
+    values = (
+        history[
+            "Total_Tickets"
+        ]
+        .tail(6)
+        .astype(float)
+        .values
+    )
+
+    x = np.arange(
+        len(values)
+    )
+
+    coefficient = np.polyfit(
+        x,
+        values,
+        1
+    )
+
+    prediction = np.polyval(
+        coefficient,
+        len(values)
+    )
+
+    recent_mean = (
+        np.mean(values)
+    )
+
+    prediction = (
+        0.55 * prediction
+        +
+        0.45 * recent_mean
+    )
+
+    return float(
+        prediction
+    )
+
+
+def xgb_prediction(
+    history,
+    target
+):
+
+    if len(history) < 18:
+        return np.nan
+
+    d = history.copy()
+
+    d["month"] = (
+        d["Month"].dt.month
+    )
+
+    d["sin_month"] = np.sin(
+        2
+        * np.pi
+        * d["month"]
+        / 12
+    )
+
+    d["cos_month"] = np.cos(
+        2
+        * np.pi
+        * d["month"]
+        / 12
+    )
+
+    d["time_index"] = np.arange(
+        len(d)
+    )
+
+    for lag in [
+        1,
+        2,
+        3,
+        6,
+        12
+    ]:
+
+        d[f"lag_{lag}"] = (
+            d["Total_Tickets"]
+            .shift(lag)
+        )
+
+    previous = (
+        d["Total_Tickets"]
+        .shift(1)
+    )
+
+    d["rolling_3"] = (
+        previous
+        .rolling(3)
+        .mean()
+    )
+
+    d["rolling_6"] = (
+        previous
+        .rolling(6)
+        .mean()
+    )
+
+    d["rolling_12"] = (
+        previous
+        .rolling(12)
+        .mean()
+    )
+
+    d["mom_growth"] = (
+        (
+            d["lag_1"]
+            -
+            d["lag_2"]
+        )
+        /
+        d["lag_2"].replace(
+            0,
+            np.nan
+        )
+    ).clip(
+        -0.25,
+        0.25
+    )
+
+    d["yoy_growth"] = (
+        (
+            d["lag_1"]
+            -
+            d["lag_12"]
+        )
+        /
+        d["lag_12"].replace(
+            0,
+            np.nan
+        )
+    ).clip(
+        -0.20,
+        0.50
+    )
+
+    features = [
+        "month",
+        "sin_month",
+        "cos_month",
+        "time_index",
+        "lag_1",
+        "lag_2",
+        "lag_3",
+        "lag_6",
+        "lag_12",
+        "rolling_3",
+        "rolling_6",
+        "rolling_12",
+        "mom_growth",
+        "yoy_growth"
+    ]
+
+    train = d.dropna(
+        subset=features
+    )
+
+    if len(train) < 8:
+        return np.nan
+
+    model = XGBRegressor(
+        **XGB_PARAMS
+    )
+
+    model.fit(
+        train[features],
+        np.log1p(
+            train["Total_Tickets"]
+        )
+    )
+
+    extended = pd.concat(
+        [
+            history,
+            pd.DataFrame(
+                {
+                    "Month": [target],
+                    "Total_Tickets": [np.nan]
+                }
+            )
+        ],
+        ignore_index=True
+    )
+
+    extended["month"] = (
+        extended["Month"].dt.month
+    )
+
+    extended["sin_month"] = np.sin(
+        2
+        * np.pi
+        * extended["month"]
+        / 12
+    )
+
+    extended["cos_month"] = np.cos(
+        2
+        * np.pi
+        * extended["month"]
+        / 12
+    )
+
+    extended["time_index"] = np.arange(
+        len(extended)
+    )
+
+    for lag in [
+        1,
+        2,
+        3,
+        6,
+        12
+    ]:
+
+        extended[f"lag_{lag}"] = (
+            extended[
+                "Total_Tickets"
+            ]
+            .shift(lag)
+        )
+
+    previous = (
+        extended[
+            "Total_Tickets"
+        ]
+        .shift(1)
+    )
+
+    extended["rolling_3"] = (
+        previous
+        .rolling(3)
+        .mean()
+    )
+
+    extended["rolling_6"] = (
+        previous
+        .rolling(6)
+        .mean()
+    )
+
+    extended["rolling_12"] = (
+        previous
+        .rolling(12)
+        .mean()
+    )
+
+    extended["mom_growth"] = (
+        (
+            extended["lag_1"]
+            -
+            extended["lag_2"]
+        )
+        /
+        extended["lag_2"].replace(
+            0,
+            np.nan
+        )
+    ).clip(
+        -0.25,
+        0.25
+    )
+
+    extended["yoy_growth"] = (
+        (
+            extended["lag_1"]
+            -
+            extended["lag_12"]
+        )
+        /
+        extended["lag_12"].replace(
+            0,
+            np.nan
+        )
+    ).clip(
+        -0.20,
+        0.50
+    )
+
+    target_row = extended[
+        extended["Month"]
+        ==
+        target
+    ]
+
+    if target_row.empty:
+        return np.nan
+
+    if target_row[
+        features
+    ].isna().any().any():
+        return np.nan
+
+    prediction = model.predict(
+        target_row[
+            features
+        ]
+    )[0]
+
+    return float(
+        np.expm1(
+            prediction
+        )
+    )
+
+
+def component_predictions(
+    history,
+    target
+):
 
     return {
-        "data": result_rows,
-        "kpis": {
-            "accuracy":       round(100 - mape_norm, 2),
-            "mape":           round(mape_norm, 2),
-            "accuracy_all":   round(100 - mape_all, 2),
-            "mape_all":       round(mape_all, 2),
-            "anomaly_months": list(KNOWN_ANOMALIES.keys()),
-        },
+        "recent3":
+            recent_weighted(
+                history,
+                3
+            ),
+
+        "recent6":
+            recent_weighted(
+                history,
+                6
+            ),
+
+        "median3":
+            recent_median(
+                history,
+                3
+            ),
+
+        "exponential":
+            exponential_prediction(
+                history
+            ),
+
+        "seasonal":
+            seasonal_prediction(
+                history,
+                target
+            ),
+
+        "level_seasonal":
+            level_adjusted_seasonal(
+                history,
+                target
+            ),
+
+        "trend":
+            trend_prediction(
+                history
+            ),
+
+        "month_delta":
+            month_delta_prediction(
+                history,
+                target
+            ),
+
+        "xgb":
+            xgb_prediction(
+                history,
+                target
+            )
     }
 
 
-# ========================================================
-# RUN
-# ========================================================
-if __name__ == "__main__":
+def normalize_prediction(
+    value
+):
 
-    result = get_actual_vs_predicted()
+    if not np.isfinite(value):
+        return np.nan
 
-    print("\n" + "=" * 60)
-    print("PREDICTION vs ACTUAL")
-    print("=" * 60)
-    for row in result["data"]:
-        tag = "  ← ANOMALY (excluded from KPIs)" if row["is_anomaly"] else ""
-        print(
-            f"{row['month']:>10}  "
-            f"actual={row['actual']:>5}  "
-            f"predicted={row['predicted']:>5}  "
-            f"error={row['error']:>4}  "
-            f"({row['pct_error']:>5.1f} %){tag}"
+    return float(
+        np.clip(
+            value,
+            FORECAST_MIN,
+            FORECAST_MAX
+        )
+    )
+
+
+def historical_validation_scores(
+    history
+):
+
+    validation_months = (
+        history["Month"]
+        .sort_values()
+        .unique()
+    )
+
+    if len(validation_months) < 6:
+        return {}
+
+    start_index = max(
+        0,
+        len(validation_months) - 12
+    )
+
+    validation_months = (
+        validation_months[
+            start_index:
+        ]
+    )
+
+    errors = {}
+
+    for target in validation_months:
+
+        target = pd.Timestamp(
+            target
         )
 
-    print("\n" + "=" * 60)
-    print("KPIs  (anomaly months excluded)")
-    print("=" * 60)
-    print(f"  Accuracy : {result['kpis']['accuracy']} %")
-    print(f"  MAPE     : {result['kpis']['mape']} %")
+        train_history = history[
+            history["Month"]
+            <
+            target
+        ].copy()
 
-    print("\nKPIs  (ALL months including anomalies)")
-    print(f"  Accuracy : {result['kpis']['accuracy_all']} %")
-    print(f"  MAPE     : {result['kpis']['mape_all']} %")
+        if len(train_history) < 6:
+            continue
 
-    print("\nAnomaly months:", result["kpis"]["anomaly_months"])
+        components = component_predictions(
+            train_history,
+            target
+        )
+
+        actual_row = history[
+            history["Month"]
+            ==
+            target
+        ]
+
+        if actual_row.empty:
+            continue
+
+        actual = float(
+            actual_row[
+                "Total_Tickets"
+            ].iloc[0]
+        )
+
+        for name, prediction in components.items():
+
+            if not np.isfinite(
+                prediction
+            ):
+                continue
+
+            if name not in errors:
+                errors[name] = []
+
+            errors[name].append(
+                abs(
+                    prediction
+                    -
+                    actual
+                )
+            )
+
+    scores = {}
+
+    for name, values in errors.items():
+
+        if not values:
+            continue
+
+        scores[name] = (
+            np.mean(values)
+        )
+
+    return scores
+
+
+def adaptive_prediction(
+    history,
+    target
+):
+
+    components = component_predictions(
+        history,
+        target
+    )
+
+    valid = {
+        name: value
+        for name, value
+        in components.items()
+        if np.isfinite(value)
+    }
+
+    if not valid:
+
+        return float(
+            history[
+                "Total_Tickets"
+            ].iloc[-1]
+        )
+
+    scores = historical_validation_scores(
+        history
+    )
+
+    if not scores:
+
+        weights = {
+            "recent3": 0.30,
+            "recent6": 0.15,
+            "median3": 0.10,
+            "exponential": 0.15,
+            "seasonal": 0.10,
+            "level_seasonal": 0.10,
+            "trend": 0.05,
+            "month_delta": 0.05,
+            "xgb": 0.00
+        }
+
+    else:
+
+        inverse_scores = {}
+
+        for name in valid:
+
+            score = scores.get(
+                name,
+                np.nan
+            )
+
+            if (
+                np.isfinite(score)
+                and
+                score > 0
+            ):
+
+                inverse_scores[name] = (
+                    1.0
+                    /
+                    score
+                )
+
+        if not inverse_scores:
+
+            return float(
+                recent_weighted(
+                    history,
+                    min(3, len(history))
+                )
+            )
+
+        total_inverse = sum(
+            inverse_scores.values()
+        )
+
+        weights = {
+            name:
+                value
+                /
+                total_inverse
+            for name, value
+            in inverse_scores.items()
+        }
+
+    weighted_values = []
+
+    for name, value in valid.items():
+
+        weight = weights.get(
+            name,
+            0.0
+        )
+
+        if weight <= 0:
+            continue
+
+        weighted_values.append(
+            (
+                name,
+                value,
+                weight
+            )
+        )
+
+    if not weighted_values:
+
+        return float(
+            recent_weighted(
+                history,
+                min(3, len(history))
+            )
+        )
+
+    total = sum(
+        value * weight
+        for _, value, weight
+        in weighted_values
+    )
+
+    weight_total = sum(
+        weight
+        for _, _, weight
+        in weighted_values
+    )
+
+    prediction = (
+        total
+        /
+        weight_total
+    )
+
+    recent_level = (
+        recent_weighted(
+            history,
+            min(3, len(history))
+        )
+    )
+
+    if np.isfinite(recent_level):
+
+        prediction = (
+            0.70 * prediction
+            +
+            0.30 * recent_level
+        )
+
+    return float(
+        prediction
+    )
+
+
+def bounded_future_forecast(
+    prediction
+):
+
+    if not np.isfinite(
+        prediction
+    ):
+
+        return float(
+            FORECAST_MIN
+        )
+
+    prediction = float(
+        prediction
+    )
+
+    return float(
+        np.clip(
+            prediction,
+            FORECAST_MIN,
+            FORECAST_MAX
+        )
+    )
+
+
+def get_actual_vs_predicted():
+
+    df = load_data()
+
+    test = df[
+        df["Month"]
+        >=
+        TEST_START
+    ].copy()
+
+    if test.empty:
+        raise ValueError(
+            "No 2026 test data available."
+        )
+
+    results = []
+
+    print(
+        "\n=============================================="
+    )
+    print(
+        "AMS FORECASTING - APPLICATION DATA"
+    )
+    print(
+        "=============================================="
+    )
+    print(
+        "CSV:",
+        CSV_PATH
+    )
+    print(
+        "Location:",
+        LOCATION
+    )
+    print(
+        "Rows:",
+        len(df)
+    )
+    print(
+        "First month:",
+        df["Month"].min().strftime(
+            "%Y-%m"
+        )
+    )
+    print(
+        "Last month:",
+        df["Month"].max().strftime(
+            "%Y-%m"
+        )
+    )
+
+    print(
+        "\n2026 source values:"
+    )
+
+    print(
+        test[
+            [
+                "Month",
+                "Total_Tickets"
+            ]
+        ].to_string(
+            index=False
+        )
+    )
+
+    print(
+        "=============================================="
+    )
+
+    print(
+        "\nWALK-FORWARD EVALUATION"
+    )
+    print(
+        "----------------------------------------------"
+    )
+
+    for _, row in test.iterrows():
+
+        target = row["Month"]
+
+        history = df[
+            df["Month"]
+            <
+            target
+        ].copy()
+
+        prediction = adaptive_prediction(
+            history,
+            target
+        )
+
+        if not np.isfinite(
+            prediction
+        ):
+
+            prediction = (
+                history[
+                    "Total_Tickets"
+                ].iloc[-1]
+            )
+
+        predicted = int(
+            round(
+                prediction
+            )
+        )
+
+        actual = int(
+            row[
+                "Total_Tickets"
+            ]
+        )
+
+        error = abs(
+            actual
+            -
+            predicted
+        )
+
+        pct_error = (
+            error
+            /
+            actual
+            *
+            100
+        )
+
+        results.append(
+            {
+                "month":
+                    target.strftime(
+                        "%b %Y"
+                    ),
+
+                "actual":
+                    actual,
+
+                "predicted":
+                    predicted,
+
+                "error":
+                    error,
+
+                "pct_error":
+                    round(
+                        pct_error,
+                        2
+                    ),
+
+                "is_anomaly":
+                    False
+            }
+        )
+
+        print(
+            f"{target.strftime('%b %Y'):>9} "
+            f"actual={actual:>5} "
+            f"predicted={predicted:>5} "
+            f"error={error:>4} "
+            f"({pct_error:>5.1f}%)"
+        )
+
+    actuals = np.array(
+        [
+            row["actual"]
+            for row in results
+        ],
+        dtype=float
+    )
+
+    predictions = np.array(
+        [
+            row["predicted"]
+            for row in results
+        ],
+        dtype=float
+    )
+
+    mape = (
+        mean_absolute_percentage_error(
+            actuals,
+            predictions
+        )
+        *
+        100
+    )
+
+    total_actual = (
+        actuals.sum()
+    )
+
+    total_predicted = (
+        predictions.sum()
+    )
+
+    aggregate_error = (
+        abs(
+            total_actual
+            -
+            total_predicted
+        )
+        /
+        total_actual
+        *
+        100
+    )
+
+    aggregate_accuracy = (
+        100
+        -
+        aggregate_error
+    )
+
+    future = []
+
+    history = df.copy()
+
+    print(
+        "\nFUTURE FORECAST"
+    )
+    print(
+        "----------------------------------------------"
+    )
+
+    for _ in range(
+        FUTURE_MONTHS
+    ):
+
+        target = (
+            history[
+                "Month"
+            ].iloc[-1]
+            +
+            pd.DateOffset(
+                months=1
+            )
+        )
+
+        raw_prediction = adaptive_prediction(
+            history,
+            target
+        )
+
+        prediction = bounded_future_forecast(
+            raw_prediction
+        )
+
+        predicted = int(
+            round(
+                prediction
+            )
+        )
+
+        future.append(
+            {
+                "month":
+                    target.strftime(
+                        "%b %Y"
+                    ),
+
+                "predicted":
+                    predicted,
+
+                "min_range":
+                    FORECAST_MIN,
+
+                "max_range":
+                    FORECAST_MAX
+            }
+        )
+
+        print(
+            f"{target.strftime('%b %Y'):>9} "
+            f"predicted={predicted:>5} "
+            f"range="
+            f"{FORECAST_MIN}-"
+            f"{FORECAST_MAX}"
+        )
+
+        history = pd.concat(
+            [
+                history,
+                pd.DataFrame(
+                    {
+                        "Month": [
+                            target
+                        ],
+
+                        "Total_Tickets": [
+                            predicted
+                        ]
+                    }
+                )
+            ],
+            ignore_index=True
+        )
+
+    return {
+        "data": results,
+
+        "kpis": {
+            "accuracy_walk_forward":
+                round(
+                    100 - mape,
+                    2
+                ),
+
+            "mape_walk_forward":
+                round(
+                    mape,
+                    2
+                ),
+
+            "accuracy_all_months":
+                round(
+                    100 - mape,
+                    2
+                ),
+
+            "mape_all_months":
+                round(
+                    mape,
+                    2
+                ),
+
+            "aggregate_accuracy":
+                round(
+                    aggregate_accuracy,
+                    2
+                ),
+
+            "aggregate_total_actual":
+                int(
+                    total_actual
+                ),
+
+            "aggregate_total_predicted":
+                int(
+                    total_predicted
+                ),
+
+            "anomaly_months": []
+        },
+
+        "future_forecast":
+            future,
+
+        "forecast_range": {
+            "min":
+                FORECAST_MIN,
+
+            "max":
+                FORECAST_MAX
+        }
+    }
+
+
+if __name__ == "__main__":
+
+    result = (
+        get_actual_vs_predicted()
+    )
+
+    print(
+        "\n=============================================="
+    )
+
+    print(
+        "FINAL KPIs"
+    )
+
+    print(
+        "=============================================="
+    )
+
+    print(
+        "Accuracy:",
+        result["kpis"][
+            "accuracy_walk_forward"
+        ],
+        "%"
+    )
+
+    print(
+        "MAPE:",
+        result["kpis"][
+            "mape_walk_forward"
+        ],
+        "%"
+    )
+
+    print(
+        "Aggregate Accuracy:",
+        result["kpis"][
+            "aggregate_accuracy"
+        ],
+        "%"
+    )
+
+    print(
+        "Total Actual:",
+        result["kpis"][
+            "aggregate_total_actual"
+        ]
+    )
+
+    print(
+        "Total Predicted:",
+        result["kpis"][
+            "aggregate_total_predicted"
+        ]
+    )
+
+    print(
+        "\nApplication CSV used:"
+    )
+
+    print(
+        CSV_PATH
+    )
+
+    print(
+        "\n=============================================="
+    )

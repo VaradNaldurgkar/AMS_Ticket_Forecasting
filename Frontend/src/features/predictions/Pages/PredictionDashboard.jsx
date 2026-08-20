@@ -345,7 +345,7 @@ const PredictionDashboard = () => {
             </h3>
 
             <span className="forecast-sub">
-              Next 3 Months
+              Next 4 Months
             </span>
 
           </div>
